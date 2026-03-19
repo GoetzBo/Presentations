@@ -2,6 +2,10 @@
 node_modules/
 bower_components/
 
+# Fonts (add actual font files here if needed to be ignored)
+# public/fonts/*.ttf
+# public/fonts/*.otf
+
 # Build outputs
 dist/
 build/
