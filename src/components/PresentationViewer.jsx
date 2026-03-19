@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { AnimatePresence } from 'framer-motion'
 import TextSlide from './slides/TextSlide'
 
 function PresentationViewer({ presentation, onExit }) {
@@ -9,9 +10,9 @@ function PresentationViewer({ presentation, onExit }) {
     // TODO: Load and parse presentation markdown
     // For now, create demo slides
     setSlides([
-      { type: 'text', content: 'Welcome', color: '#000000', background: '#ffffff' },
-      { type: 'text', content: 'Make it exist first', color: '#000000', background: '#ffffff' },
-      { type: 'text', content: 'Then make it beautiful', color: '#000000', background: '#ffffff' }
+      { type: 'text', content: 'Welcome to the Future', animation: 'cascade-up', color: '#000000', background: '#ffffff' },
+      { type: 'text', content: 'Make it exist first', animation: 'cascade-up', color: '#000000', background: '#ffffff' },
+      { type: 'text', content: 'Then make it beautiful', animation: 'cascade-up', color: '#000000', background: '#ffffff' }
     ])
   }, [presentation])
 
@@ -36,17 +37,17 @@ function PresentationViewer({ presentation, onExit }) {
 
   return (
     <div className="viewer">
-      <button className="exit-button" onClick={onExit}>
-        Exit
-      </button>
-
-      {slide.type === 'text' && (
-        <TextSlide
-          content={slide.content}
-          color={slide.color}
-          background={slide.background}
-        />
-      )}
+      <AnimatePresence mode="wait">
+        {slide.type === 'text' && (
+          <TextSlide
+            key={currentSlide}
+            content={slide.content}
+            color={slide.color}
+            background={slide.background}
+            animation={slide.animation}
+          />
+        )}
+      </AnimatePresence>
     </div>
   )
 }

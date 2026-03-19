@@ -95,23 +95,3 @@ body {
   padding: 2rem;
   line-height: 1.2;
 }
-
-.exit-button {
-  position: fixed;
-  top: 2rem;
-  right: 2rem;
-  padding: 1rem 2rem;
-  background: rgba(0, 0, 0, 0.1);
-  border: 2px solid rgba(0, 0, 0, 0.2);
-  border-radius: 8px;
-  font-size: 1rem;
-  font-weight: 900;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  z-index: 1000;
-}
-
-.exit-button:hover {
-  background: rgba(0, 0, 0, 0.8);
-  color: #ffffff;
-}
