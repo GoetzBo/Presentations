@@ -1,21 +1,40 @@
 import { motion } from 'framer-motion'
 
-function ImageSlide({ src, alt = '', fit = 'fullscreen', background = '#000000' }) {
-  const imageStyles = {
-    fullscreen: {
-      width: '100%',
-      height: '100%',
-      objectFit: 'cover',
-      display: 'block',
-      padding: 0
-    },
-    inset: {
-      maxWidth: '90%',
-      maxHeight: '90%',
-      width: 'auto',
-      height: 'auto',
-      objectFit: 'contain',
-      display: 'block'
+function ImageSlide({ src, alt = '', fit = 'fullscreen', background = '#000000', width, height }) {
+  const getImageStyle = () => {
+    switch (fit) {
+      case 'fullscreen':
+        return {
+          width: '100%',
+          height: '100%',
+          objectFit: 'cover',
+          display: 'block'
+        }
+      case 'inset':
+        return {
+          maxWidth: '90%',
+          maxHeight: '90%',
+          width: 'auto',
+          height: 'auto',
+          objectFit: 'contain',
+          display: 'block'
+        }
+      case 'positioned':
+        return {
+          width: width || 'auto',
+          height: height || 'auto',
+          maxWidth: '90%',
+          maxHeight: '90%',
+          display: 'block',
+          objectFit: 'contain'
+        }
+      default:
+        return {
+          width: '100%',
+          height: '100%',
+          objectFit: 'cover',
+          display: 'block'
+        }
     }
   }
 
@@ -39,7 +58,7 @@ function ImageSlide({ src, alt = '', fit = 'fullscreen', background = '#000000' 
       <img
         src={src}
         alt={alt}
-        style={imageStyles[fit] || imageStyles.fullscreen}
+        style={getImageStyle()}
       />
     </motion.div>
   )

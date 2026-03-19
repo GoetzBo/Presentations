@@ -13,9 +13,9 @@ assets/your-image.jpg
 ```
 
 **Behavior:**
-- Image scales to fit entire viewport
-- Maintains aspect ratio (no distortion)
-- Black letterboxing/pillarboxing if needed
+- Image fills entire viewport
+- Crops to fit (object-fit: cover)
+- No letterboxing/pillarboxing
 - Best for dramatic, immersive images
 
 **Default background:** `#000000` (black)
@@ -37,10 +37,30 @@ assets/your-image.jpg
 
 **Default background:** Inherits from presentation default
 
+### 3. positioned
+```markdown
+## slide: image
+fit: positioned
+width: 1200px
+background: #ffffff
+assets/your-image.jpg
+```
+
+**Behavior:**
+- Custom sized image
+- Centered with whitespace
+- Maintains aspect ratio
+- Specify width and/or height
+- Best for specific image sizes
+
+**Default background:** Inherits from presentation default
+
 ## Parameters
 
-- **fit**: `fullscreen` or `inset` (default: `fullscreen`)
+- **fit**: `fullscreen`, `inset`, or `positioned` (default: `fullscreen`)
 - **background**: Any CSS color value (hex, rgb, named colors)
+- **width**: Image width (only for `positioned` fit, e.g., `1200px`, `50%`, `auto`)
+- **height**: Image height (only for `positioned` fit, e.g., `800px`, `50%`, `auto`)
 
 ## Examples
 
@@ -59,4 +79,10 @@ assets/diagram.png
 fit: inset
 background: #ffffff
 assets/product-photo.jpg
+
+## slide: image
+fit: positioned
+width: 1200px
+background: #f0f0f0
+assets/diagram.png
 ```
