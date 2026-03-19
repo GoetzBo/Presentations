@@ -9,10 +9,13 @@ function TextSlide({ content, color = '#000000', background = '#ffffff', animati
     <motion.div
       className="slide"
       style={{ backgroundColor: background }}
-      initial={{ opacity: 1 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      transition={{ duration: 0.5 }}
+      initial={{ opacity: 0, filter: 'blur(20px)' }}
+      animate={{ opacity: 1, filter: 'blur(0px)' }}
+      exit={{ opacity: 0, filter: 'blur(20px)' }}
+      transition={{
+        opacity: { duration: 0.3 },
+        filter: { duration: 0.5, ease: 'easeInOut' }
+      }}
     >
       <div className="slide-text" style={{ color }}>
         {words.map((word, index) => (

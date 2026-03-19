@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { AnimatePresence } from 'framer-motion'
 import TextSlide from './slides/TextSlide'
+import ImageSlide from './slides/ImageSlide'
 
 function PresentationViewer({ presentation, onExit }) {
   const [slides, setSlides] = useState([])
@@ -11,7 +12,9 @@ function PresentationViewer({ presentation, onExit }) {
     // For now, create demo slides
     setSlides([
       { type: 'text', content: 'Welcome to the Future', animation: 'cascade-up', color: '#000000', background: '#ffffff' },
+      { type: 'image', src: '/presentations/demo/assets/merlin_176725119_67d397c8-13ff-4150-af39-e7ffa3fe95f4-articleLarge.jpg.webp', alt: 'Demo image', fit: 'fullscreen', background: '#000000' },
       { type: 'text', content: 'Make it exist first', animation: 'cascade-up', color: '#000000', background: '#ffffff' },
+      { type: 'image', src: '/presentations/demo/assets/merlin_176725119_67d397c8-13ff-4150-af39-e7ffa3fe95f4-articleLarge.jpg.webp', alt: 'Demo image', fit: 'inset', background: '#ffffff' },
       { type: 'text', content: 'Then make it beautiful', animation: 'cascade-up', color: '#000000', background: '#ffffff' }
     ])
   }, [presentation])
@@ -45,6 +48,15 @@ function PresentationViewer({ presentation, onExit }) {
             color={slide.color}
             background={slide.background}
             animation={slide.animation}
+          />
+        )}
+        {slide.type === 'image' && (
+          <ImageSlide
+            key={currentSlide}
+            src={slide.src}
+            alt={slide.alt}
+            fit={slide.fit}
+            background={slide.background}
           />
         )}
       </AnimatePresence>
