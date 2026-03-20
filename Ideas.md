@@ -193,6 +193,42 @@ All core decisions made. Time to scaffold the project and start with Phase 1.
 
 ## Backlog / Future Enhancements
 
+### Export Functionality ✅ **IMPLEMENTED**
+**Goal**: Export presentations as PDF or video files for sharing
+
+**Features Implemented:**
+1. **PDF Export**
+   - One slide per page in 16:9 landscape format
+   - High quality rendering (2x scale for retina displays)
+   - Captures final state of text slides
+   - Image slides rendered correctly
+   - Uses jsPDF + html2canvas (~75KB gzipped)
+
+2. **Video Export**
+   - WebM format with vp9/vp8 codec support
+   - 30 fps recording with MediaRecorder API
+   - Configurable slide duration (default 3s)
+   - Automatic duration adjustment for text animations
+   - Native browser API (no external dependencies)
+
+3. **User Interface**
+   - Export buttons appear on hover over presentation cards
+   - Clean progress modal with percentage indicator
+   - Cancel support for video recording
+   - Error handling with user-friendly messages
+
+**Files Created:**
+- `src/utils/exportPDF.js` - PDF export utility
+- `src/utils/exportVideo.js` - Video recording utility
+- `src/components/ExportProgress.jsx` - Progress UI component
+- `src/styles/index.css` - Export button and modal styles
+
+**Dependencies Added:**
+- `jspdf` (~50KB gzipped)
+- `html2canvas` (~45KB gzipped)
+
+**Status**: ✅ Complete - Ready for testing
+
 ### GitHub Pages Hosting 🌐
 **Goal**: Deploy presentations to GitHub Pages for access from anywhere
 
@@ -214,4 +250,5 @@ All core decisions made. Time to scaffold the project and start with Phase 1.
 - Single source of truth
 
 **Status**: On hold - implement later when needed for public presentations
+
 

@@ -1,10 +1,16 @@
 import { useState, useEffect, useRef } from 'react'
 import { loadPresentations } from '../utils/loadPresentations'
 import { parsePresentation } from '../utils/parsePresentation'
+import { exportPresentationAsPDF } from '../utils/exportPDF'
+import { recordPresentationAsVideo } from '../utils/exportVideo'
+import ExportProgress from './ExportProgress'
+import { AnimatePresence } from 'framer-motion'
 
 function PresentationSelector({ onSelect }) {
   const [presentations, setPresentations] = useState([])
   const [thumbnails, setThumbnails] = useState({})
+  const [exportState, setExportState] = useState(null) // { type: 'pdf'|'video', current: 0, total: 0, presentation: {} }
+  const [hoveredCard, setHoveredCard] = useState(null)
   const canvasRef = useRef(null)
 
   useEffect(() => {
@@ -125,6 +131,72 @@ function PresentationSelector({ onSelect }) {
     }
   }
 
+  const handleExportPDF = async (e, presentation) => {
+    e.stopPropagation()
+
+    setExportState({
+      type: 'pdf',
+      current: 0,
+      total: 1,
+      presentation
+    })
+
+    try {
+      await exportPresentationAsPDF(presentation, (current, total) => {
+        setExportState({
+          type: 'pdf',
+          current,
+          total,
+          presentation
+        })
+      })
+      setExportState(null)
+    } catch (error) {
+      console.error('PDF export failed:', error)
+      alert(`Failed to export PDF: ${error.message}`)
+      setExportState(null)
+    }
+  }
+
+  const handleExportVideo = async (e, presentation) => {
+    e.stopPropagation()
+
+    setExportState({
+      type: 'video',
+      current: 0,
+      total: 1,
+      presentation
+    })
+
+    try {
+      await recordPresentationAsVideo(
+        presentation,
+        {
+          fps: 60,
+          slideDelay: 3000,
+          videoBitrate: 2500000
+        },
+        (current, total) => {
+          setExportState({
+            type: 'video',
+            current,
+            total,
+            presentation
+          })
+        }
+      )
+      setExportState(null)
+    } catch (error) {
+      console.error('Video export failed:', error)
+      alert(`Failed to export video: ${error.message}`)
+      setExportState(null)
+    }
+  }
+
+  const handleCancelExport = () => {
+    setExportState(null)
+  }
+
   return (
     <div className="selector">
       <h1>Presentations</h1>
@@ -138,6 +210,8 @@ function PresentationSelector({ onSelect }) {
             <div
               key={presentation.id}
               className="presentation-card"
+              onMouseEnter={() => setHoveredCard(presentation.id)}
+              onMouseLeave={() => setHoveredCard(null)}
               onClick={() => {
                 enterFullscreen()
                 onSelect(presentation)
@@ -151,6 +225,24 @@ function PresentationSelector({ onSelect }) {
                 )}
               </div>
               <div className="presentation-title">{presentation.name}</div>
+              {hoveredCard === presentation.id && (
+                <div className="export-buttons">
+                  <button
+                    className="export-btn"
+                    onClick={(e) => handleExportPDF(e, presentation)}
+                    title="Export as PDF"
+                  >
+                    📄 PDF
+                  </button>
+                  <button
+                    className="export-btn"
+                    onClick={(e) => handleExportVideo(e, presentation)}
+                    title="Export as Video"
+                  >
+                    🎥 Video
+                  </button>
+                </div>
+              )}
             </div>
           ))
         )}
@@ -160,6 +252,17 @@ function PresentationSelector({ onSelect }) {
         <div>Use <kbd style={{ padding: '2px 6px', background: 'transparent', border: '1px solid currentColor', borderRadius: '3px', fontFamily: 'monospace' }}>Arrow Keys</kbd> or <kbd style={{ padding: '2px 6px', background: 'transparent', border: '1px solid currentColor', borderRadius: '3px', fontFamily: 'monospace' }}>Space</kbd> to navigate slides.</div>
         <div>Press <kbd style={{ padding: '2px 6px', background: 'transparent', border: '1px solid currentColor', borderRadius: '3px', fontFamily: 'monospace' }}>Esc</kbd> to exit fullscreen or return to selection.</div>
       </div>
+
+      <AnimatePresence>
+        {exportState && (
+          <ExportProgress
+            type={exportState.type}
+            current={exportState.current}
+            total={exportState.total}
+            onCancel={exportState.type === 'video' ? handleCancelExport : null}
+          />
+        )}
+      </AnimatePresence>
     </div>
   )
 }
