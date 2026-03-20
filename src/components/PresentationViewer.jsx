@@ -8,6 +8,7 @@ function PresentationViewer({ presentation, onExit }) {
   const [slides, setSlides] = useState([])
   const [currentSlide, setCurrentSlide] = useState(0)
   const [transitionMode, setTransitionMode] = useState('wait')
+  const [isStarted, setIsStarted] = useState(false)
   const previousSlideIndex = useRef(0)
 
   useEffect(() => {
@@ -57,6 +58,15 @@ function PresentationViewer({ presentation, onExit }) {
 
   useEffect(() => {
     const handleKeyDown = (e) => {
+      // Start presentation on first keypress
+      if (!isStarted) {
+        if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === 'ArrowLeft' || e.key === 'ArrowUp' || e.code === 'Space') {
+          e.preventDefault()
+          setIsStarted(true)
+          return
+        }
+      }
+
       if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
         setCurrentSlide((prev) => Math.min(prev + 1, slides.length - 1))
       } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
@@ -75,7 +85,7 @@ function PresentationViewer({ presentation, onExit }) {
 
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [slides.length, onExit])
+  }, [slides.length, onExit, isStarted])
 
   if (slides.length === 0) return null
 
@@ -84,7 +94,7 @@ function PresentationViewer({ presentation, onExit }) {
   return (
     <div className="viewer">
       <AnimatePresence mode={transitionMode}>
-        {slide.type === 'text' && (
+        {isStarted && slide.type === 'text' && (
           <TextSlide
             key={currentSlide}
             content={slide.content}
@@ -93,7 +103,7 @@ function PresentationViewer({ presentation, onExit }) {
             animation={slide.animation}
           />
         )}
-        {slide.type === 'image' && (
+        {isStarted && slide.type === 'image' && (
           <ImageSlide
             key={currentSlide}
             src={slide.src}
@@ -104,7 +114,7 @@ function PresentationViewer({ presentation, onExit }) {
             height={slide.height}
           />
         )}
-        {slide.type === 'video' && (
+        {isStarted && slide.type === 'video' && (
           <VideoSlide
             key={currentSlide}
             src={slide.src}
@@ -117,6 +127,17 @@ function PresentationViewer({ presentation, onExit }) {
           />
         )}
       </AnimatePresence>
+      {!isStarted && (
+        <div style={{
+          width: '100%',
+          height: '100%',
+          backgroundColor: slide.background || '#ffffff',
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          zIndex: 0
+        }} />
+      )}
     </div>
   )
 }

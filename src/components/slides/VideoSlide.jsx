@@ -84,8 +84,8 @@ function VideoSlide({ src, fit = 'fullscreen', background = '#000000', loop = tr
       animate={{ opacity: 1, filter: 'blur(0px)' }}
       exit={{ opacity: 0, filter: 'blur(20px)' }}
       transition={{
-        opacity: { duration: 0.3 },
-        filter: { duration: 0.5, ease: 'easeInOut' }
+        opacity: { duration: 0.6 },
+        filter: { duration: 0.8, ease: 'easeInOut' }
       }}
     >
       <video
