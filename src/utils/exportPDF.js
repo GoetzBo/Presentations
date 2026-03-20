@@ -34,11 +34,12 @@ export async function exportPresentationAsPDF(presentation, onProgress) {
   document.body.appendChild(container)
 
   try {
+    // Render all slides
     for (let i = 0; i < slides.length; i++) {
       const slide = slides[i]
 
       if (onProgress) {
-        onProgress(i + 1, slides.length)
+        onProgress(i + 1, slides.length + 1) // +1 for QR code page
       }
 
       // Add new page for slides after the first
@@ -71,6 +72,28 @@ export async function exportPresentationAsPDF(presentation, onProgress) {
       container.innerHTML = ''
     }
 
+    // Add QR Code page
+    if (onProgress) {
+      onProgress(slides.length + 1, slides.length + 1)
+    }
+
+    pdf.addPage()
+    await renderQRCodePage(container)
+    await new Promise(resolve => setTimeout(resolve, 300))
+
+    const qrCanvas = await html2canvas(container, {
+      scale: 2,
+      useCORS: true,
+      allowTaint: true,
+      backgroundColor: '#ffffff',
+      logging: false,
+      width: 1600,
+      height: 900
+    })
+
+    const qrImgData = qrCanvas.toDataURL('image/png')
+    pdf.addImage(qrImgData, 'PNG', 0, 0, 297, 167)
+
     // Save PDF
     const filename = `${presentation.name.replace(/[^a-z0-9]/gi, '_')}.pdf`
     pdf.save(filename)
@@ -88,11 +111,8 @@ async function renderSlideToDOM(container, slide) {
   container.innerHTML = ''
 
   const slideDiv = document.createElement('div')
-  slideDiv.style.width = '100%'
-  slideDiv.style.height = '100%'
-  slideDiv.style.display = 'flex'
-  slideDiv.style.alignItems = 'center'
-  slideDiv.style.justifyContent = 'center'
+  slideDiv.style.width = '1600px'
+  slideDiv.style.height = '900px'
   slideDiv.style.backgroundColor = slide.background || '#ffffff'
   slideDiv.style.position = 'relative'
   slideDiv.style.overflow = 'hidden'
@@ -100,6 +120,11 @@ async function renderSlideToDOM(container, slide) {
   if (slide.type === 'text') {
     // Render text slide
     const textDiv = document.createElement('div')
+    textDiv.style.position = 'absolute'
+    textDiv.style.top = '50%'
+    textDiv.style.left = '50%'
+    textDiv.style.transform = 'translate(-50%, -50%)'
+    textDiv.style.width = '100%'
     textDiv.style.fontSize = '6rem'
     textDiv.style.fontWeight = '900'
     textDiv.style.fontFamily = '"SF Pro Display", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif'
@@ -107,7 +132,6 @@ async function renderSlideToDOM(container, slide) {
     textDiv.style.textAlign = 'center'
     textDiv.style.padding = '2rem'
     textDiv.style.lineHeight = '1.2'
-    textDiv.style.maxWidth = '100%'
     textDiv.style.wordWrap = 'break-word'
     textDiv.textContent = slide.content || ''
 
@@ -122,24 +146,34 @@ async function renderSlideToDOM(container, slide) {
     const fit = slide.fit || 'fullscreen'
 
     if (fit === 'fullscreen') {
+      // Position absolutely to ensure proper coverage
+      img.style.position = 'absolute'
+      img.style.top = '0'
+      img.style.left = '0'
       img.style.width = '100%'
       img.style.height = '100%'
       img.style.objectFit = 'cover'
-      img.style.display = 'block'
+      img.style.objectPosition = 'center'
     } else if (fit === 'inset') {
+      img.style.position = 'absolute'
+      img.style.top = '50%'
+      img.style.left = '50%'
+      img.style.transform = 'translate(-50%, -50%)'
       img.style.maxWidth = '90%'
       img.style.maxHeight = '90%'
       img.style.width = 'auto'
       img.style.height = 'auto'
       img.style.objectFit = 'contain'
-      img.style.display = 'block'
     } else if (fit === 'positioned') {
+      img.style.position = 'absolute'
+      img.style.top = '50%'
+      img.style.left = '50%'
+      img.style.transform = 'translate(-50%, -50%)'
       img.style.width = slide.width || 'auto'
       img.style.height = slide.height || 'auto'
       img.style.maxWidth = '90%'
       img.style.maxHeight = '90%'
       img.style.objectFit = 'contain'
-      img.style.display = 'block'
     }
 
     slideDiv.appendChild(img)
@@ -181,24 +215,34 @@ async function renderSlideToDOM(container, slide) {
     const fit = slide.fit || 'fullscreen'
 
     if (fit === 'fullscreen') {
+      // Position absolutely to ensure proper coverage
+      img.style.position = 'absolute'
+      img.style.top = '0'
+      img.style.left = '0'
       img.style.width = '100%'
       img.style.height = '100%'
       img.style.objectFit = 'cover'
-      img.style.display = 'block'
+      img.style.objectPosition = 'center'
     } else if (fit === 'inset') {
+      img.style.position = 'absolute'
+      img.style.top = '50%'
+      img.style.left = '50%'
+      img.style.transform = 'translate(-50%, -50%)'
       img.style.maxWidth = '90%'
       img.style.maxHeight = '90%'
       img.style.width = 'auto'
       img.style.height = 'auto'
       img.style.objectFit = 'contain'
-      img.style.display = 'block'
     } else if (fit === 'positioned') {
+      img.style.position = 'absolute'
+      img.style.top = '50%'
+      img.style.left = '50%'
+      img.style.transform = 'translate(-50%, -50%)'
       img.style.width = slide.width || 'auto'
       img.style.height = slide.height || 'auto'
       img.style.maxWidth = '90%'
       img.style.maxHeight = '90%'
       img.style.objectFit = 'contain'
-      img.style.display = 'block'
     }
 
     // Remove video, add image
@@ -207,6 +251,49 @@ async function renderSlideToDOM(container, slide) {
   }
 
   container.appendChild(slideDiv)
+}
+
+/**
+ * Render QR code page
+ */
+async function renderQRCodePage(container) {
+  container.innerHTML = ''
+
+  const pageDiv = document.createElement('div')
+  pageDiv.style.width = '1600px'
+  pageDiv.style.height = '900px'
+  pageDiv.style.backgroundColor = '#ffffff'
+  pageDiv.style.position = 'relative'
+  pageDiv.style.display = 'flex'
+  pageDiv.style.flexDirection = 'column'
+  pageDiv.style.alignItems = 'center'
+  pageDiv.style.justifyContent = 'center'
+  pageDiv.style.gap = '2rem'
+
+  // QR Code placeholder (dummy for now)
+  const qrPlaceholder = document.createElement('div')
+  qrPlaceholder.style.width = '300px'
+  qrPlaceholder.style.height = '300px'
+  qrPlaceholder.style.backgroundColor = '#000000'
+  qrPlaceholder.style.display = 'flex'
+  qrPlaceholder.style.alignItems = 'center'
+  qrPlaceholder.style.justifyContent = 'center'
+  qrPlaceholder.style.color = '#ffffff'
+  qrPlaceholder.style.fontSize = '2rem'
+  qrPlaceholder.style.fontWeight = '900'
+  qrPlaceholder.style.fontFamily = '"SF Pro Display", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif'
+  qrPlaceholder.textContent = 'QR CODE'
+
+  // Text below QR code
+  const textDiv = document.createElement('div')
+  textDiv.style.fontSize = '1.5rem'
+  textDiv.style.color = '#666666'
+  textDiv.style.fontFamily = '"SF Pro Display", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif'
+  textDiv.textContent = 'Scan to view presentation'
+
+  pageDiv.appendChild(qrPlaceholder)
+  pageDiv.appendChild(textDiv)
+  container.appendChild(pageDiv)
 }
 
 /**
@@ -233,5 +320,6 @@ async function waitForSlideReady(container, slide) {
   // Small delay to ensure rendering is complete
   await new Promise(resolve => setTimeout(resolve, 500))
 }
+
 
 

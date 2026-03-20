@@ -5,15 +5,19 @@ animation: cascade-up
 background: #ffffff
 color: #333333
 
-Welcome to Test Presentation
+Make it exist first
 
 ## slide: text
 animation: cascade-up
 background: #ffffff
 color: #000000
 
-This is a simple test
-presentation with text slides
+You can make it good later
+
+## slide: image
+fit: fullscreen
+background: #fffff
+assets/social-the-adventures-of-captain-obvious-in-supply-chain.jpg.png
 
 ## slide: text
 animation: cascade-up
