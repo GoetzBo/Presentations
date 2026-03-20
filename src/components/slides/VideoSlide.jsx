@@ -27,15 +27,18 @@ function VideoSlide({ src, fit = 'fullscreen', background = '#000000', loop = tr
   }
 
   useEffect(() => {
-    // Auto-play video when slide loads
-    if (videoRef.current) {
+    // Auto-play video when slide loads (only for native videos, not YouTube)
+    if (videoRef.current && !isYouTube) {
       videoRef.current.play().catch(err => {
         console.log('Autoplay prevented:', err)
       })
     }
-  }, [src])
+  }, [src, isYouTube])
 
   useEffect(() => {
+    // Spacebar control only for native videos, not YouTube
+    if (isYouTube) return
+
     const handleSpacebar = (e) => {
       if (e.code === 'Space') {
         e.preventDefault()
@@ -53,7 +56,7 @@ function VideoSlide({ src, fit = 'fullscreen', background = '#000000', loop = tr
 
     window.addEventListener('keydown', handleSpacebar)
     return () => window.removeEventListener('keydown', handleSpacebar)
-  }, [isPlaying])
+  }, [isPlaying, isYouTube])
 
   const getVideoStyle = () => {
     switch (fit) {
