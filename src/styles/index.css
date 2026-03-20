@@ -54,6 +54,9 @@ body {
   gap: 2rem;
   width: 100%;
   justify-content: center;
+  /* Debug */
+  border: 2px solid red;
+  background: rgba(255, 0, 0, 0.1);
 }
 
 .pagination-arrow {
@@ -106,6 +109,9 @@ body {
   gap: 2rem;
   justify-content: center;
   max-width: 1200px;
+  /* Debug */
+  border: 2px solid green;
+  background: rgba(0, 255, 0, 0.1);
 }
 
 .presentation-item {
@@ -113,6 +119,11 @@ body {
   flex-direction: column;
   gap: 0.5rem;
   width: 350px;
+  align-items: center;
+  text-align: center;
+  /* Debug */
+  border: 2px solid blue;
+  background: rgba(0, 0, 255, 0.1);
 }
 
 .presentation-item.empty {
