@@ -232,7 +232,7 @@ async function renderSlideToDOM(container, slide) {
     const fit = slide.fit || 'fullscreen'
 
     if (fit === 'fullscreen') {
-      // Create canvas with slide dimensions
+      // Create canvas with slide dimensions for fullscreen
       const canvas = document.createElement('canvas')
       canvas.width = 1600
       canvas.height = 900
@@ -265,47 +265,43 @@ async function renderSlideToDOM(container, slide) {
       ctx.drawImage(video, offsetX, offsetY, drawWidth, drawHeight)
       slideDiv.appendChild(canvas)
 
-    } else if (fit === 'inset') {
+    } else {
+      // For inset and positioned, use centered image approach
       slideDiv.style.display = 'flex'
       slideDiv.style.alignItems = 'center'
       slideDiv.style.justifyContent = 'center'
 
-      const canvas = document.createElement('canvas')
-      canvas.width = video.videoWidth
-      canvas.height = video.videoHeight
-      const ctx = canvas.getContext('2d')
-      ctx.drawImage(video, 0, 0)
+      // Capture video frame to canvas at original size
+      const captureCanvas = document.createElement('canvas')
+      captureCanvas.width = video.videoWidth || 1920
+      captureCanvas.height = video.videoHeight || 1080
+      const captureCtx = captureCanvas.getContext('2d')
+      captureCtx.drawImage(video, 0, 0, captureCanvas.width, captureCanvas.height)
 
+      // Create img from canvas
       const img = document.createElement('img')
-      img.src = canvas.toDataURL('image/png')
-      img.style.maxWidth = '90%'
-      img.style.maxHeight = '90%'
-      img.style.width = 'auto'
-      img.style.height = 'auto'
-      img.style.objectFit = 'contain'
-      img.style.display = 'block'
+      img.src = captureCanvas.toDataURL('image/png')
 
-      slideDiv.appendChild(img)
-
-    } else if (fit === 'positioned') {
-      slideDiv.style.display = 'flex'
-      slideDiv.style.alignItems = 'center'
-      slideDiv.style.justifyContent = 'center'
-
-      const canvas = document.createElement('canvas')
-      canvas.width = video.videoWidth
-      canvas.height = video.videoHeight
-      const ctx = canvas.getContext('2d')
-      ctx.drawImage(video, 0, 0)
-
-      const img = document.createElement('img')
-      img.src = canvas.toDataURL('image/png')
-      img.style.width = slide.width || 'auto'
-      img.style.height = slide.height || 'auto'
-      img.style.maxWidth = '90%'
-      img.style.maxHeight = '90%'
-      img.style.objectFit = 'contain'
-      img.style.display = 'block'
+      if (fit === 'inset') {
+        img.style.maxWidth = '90%'
+        img.style.maxHeight = '90%'
+        img.style.width = 'auto'
+        img.style.height = 'auto'
+        img.style.objectFit = 'contain'
+        img.style.display = 'block'
+      } else if (fit === 'positioned') {
+        // Use specified dimensions
+        if (slide.width) {
+          img.style.width = slide.width
+        }
+        if (slide.height) {
+          img.style.height = slide.height
+        }
+        img.style.maxWidth = '90%'
+        img.style.maxHeight = '90%'
+        img.style.objectFit = 'contain'
+        img.style.display = 'block'
+      }
 
       slideDiv.appendChild(img)
     }
