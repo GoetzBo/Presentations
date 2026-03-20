@@ -36,8 +36,9 @@ body {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  height: 100%;
-  padding: 2rem;
+  min-height: 100%;
+  padding: 3rem 2rem;
+  overflow-y: auto;
 }
 
 .selector h1 {
@@ -46,28 +47,77 @@ body {
   margin-bottom: 3rem;
 }
 
-.presentation-list {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-  min-width: 400px;
+.presentation-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 320px));
+  gap: 2rem;
+  justify-content: center;
+  max-width: 1400px;
+  width: 100%;
 }
 
-.presentation-item {
-  padding: 1.5rem 2rem;
-  background: #f5f5f5;
-  border: 2px solid transparent;
-  border-radius: 8px;
+.presentation-card {
   cursor: pointer;
-  font-size: 1.5rem;
-  font-weight: 900;
-  transition: all 0.2s ease;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+  opacity: 0.9;
 }
 
-.presentation-item:hover {
-  background: #000000;
-  color: #ffffff;
+.presentation-card:hover {
+  transform: translateY(-4px);
+  opacity: 1;
+}
+
+.presentation-card.empty {
+  cursor: default;
+  opacity: 0.6;
+  text-align: center;
+  padding: 3rem;
+  font-size: 1.2rem;
+}
+
+.presentation-thumbnail {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  background: #f5f5f5;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 2px solid #e0e0e0;
+  transition: border-color 0.2s ease;
+}
+
+.presentation-card:hover .presentation-thumbnail {
   border-color: #000000;
+}
+
+.presentation-thumbnail img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.thumbnail-loading {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, #f5f5f5 25%, #e8e8e8 50%, #f5f5f5 75%);
+  background-size: 200% 100%;
+  animation: loading 1.5s infinite;
+}
+
+@keyframes loading {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+.presentation-title {
+  margin-top: 1rem;
+  font-size: 1.25rem;
+  font-weight: 900;
+  text-align: center;
 }
 
 /* Presentation Viewer */

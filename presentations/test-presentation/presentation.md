@@ -2,7 +2,7 @@
 
 ## slide: text
 animation: cascade-up
-background: #f0f0f0
+background: #ffffff
 color: #333333
 
 Welcome to Test Presentation
