@@ -63,6 +63,13 @@ function PresentationViewer({ presentation, onExit }) {
         setCurrentSlide((prev) => Math.max(prev - 1, 0))
       } else if (e.key === 'Escape') {
         onExit()
+      } else if (e.key === 'f' || e.key === 'F') {
+        // Toggle fullscreen
+        if (!document.fullscreenElement) {
+          document.documentElement.requestFullscreen()
+        } else {
+          document.exitFullscreen()
+        }
       }
     }
 

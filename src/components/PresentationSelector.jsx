@@ -11,6 +11,12 @@ function PresentationSelector({ onSelect }) {
     ])
   }, [])
 
+  const enterFullscreen = () => {
+    if (document.documentElement.requestFullscreen) {
+      document.documentElement.requestFullscreen()
+    }
+  }
+
   return (
     <div className="selector">
       <h1>Presentations</h1>
@@ -24,12 +30,18 @@ function PresentationSelector({ onSelect }) {
             <div
               key={presentation.id}
               className="presentation-item"
-              onClick={() => onSelect(presentation)}
+              onClick={() => {
+                enterFullscreen()
+                onSelect(presentation)
+              }}
             >
               {presentation.name}
             </div>
           ))
         )}
+      </div>
+      <div style={{ marginTop: '2rem', fontSize: '0.9rem', opacity: 0.6 }}>
+        Press F during presentation to toggle fullscreen
       </div>
     </div>
   )
