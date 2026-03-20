@@ -49,11 +49,24 @@ body {
 
 .presentation-list {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  grid-template-columns: repeat(3, 1fr);
   gap: 2rem;
-  max-width: 1400px;
+  max-width: 1200px;
   width: 100%;
-  justify-items: center;
+}
+
+@media (max-width: 1024px) {
+  .presentation-list {
+    grid-template-columns: repeat(2, 1fr);
+    max-width: 800px;
+  }
+}
+
+@media (max-width: 640px) {
+  .presentation-list {
+    grid-template-columns: 1fr;
+    max-width: 400px;
+  }
 }
 
 .presentation-item {
@@ -61,7 +74,6 @@ body {
   flex-direction: column;
   gap: 0.5rem;
   width: 100%;
-  max-width: 400px;
 }
 
 .presentation-item.empty {
