@@ -47,78 +47,52 @@ body {
   margin-bottom: 3rem;
 }
 
-.presentation-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 320px));
-  gap: 2rem;
-  justify-content: center;
-  max-width: 1400px;
+.presentation-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  max-width: 600px;
   width: 100%;
 }
 
-.presentation-card {
-  cursor: pointer;
-  transition: transform 0.2s ease, opacity 0.2s ease;
-  opacity: 0.9;
-  position: relative;
+.presentation-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
 }
 
-.presentation-card:hover {
-  transform: translateY(-4px);
-  opacity: 1;
-}
-
-.presentation-card.empty {
-  cursor: default;
+.presentation-item.empty {
   opacity: 0.6;
   text-align: center;
-  padding: 3rem;
+  padding: 2rem;
   font-size: 1.2rem;
 }
 
-.presentation-thumbnail {
-  width: 100%;
-  aspect-ratio: 16 / 9;
-  background: #f5f5f5;
-  border-radius: 8px;
-  overflow: hidden;
-  border: 2px solid #e0e0e0;
-  transition: border-color 0.2s ease;
-}
-
-.presentation-card:hover .presentation-thumbnail {
-  border-color: #000000;
-}
-
-.presentation-thumbnail img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
-}
-
-.thumbnail-loading {
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, #f5f5f5 25%, #e8e8e8 50%, #f5f5f5 75%);
-  background-size: 200% 100%;
-  animation: loading 1.5s infinite;
-}
-
-@keyframes loading {
-  0% {
-    background-position: 200% 0;
-  }
-  100% {
-    background-position: -200% 0;
-  }
-}
-
-.presentation-title {
-  margin-top: 1rem;
-  font-size: 1.25rem;
+.presentation-name {
+  font-size: 1.5rem;
   font-weight: 900;
-  text-align: center;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+
+.presentation-name:hover {
+  opacity: 0.7;
+}
+
+.presentation-actions {
+  display: flex;
+  gap: 1rem;
+  font-size: 0.85rem;
+  color: #999;
+}
+
+.export-link {
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.export-link:hover {
+  color: #000;
 }
 
 /* Presentation Viewer */
@@ -145,35 +119,6 @@ body {
   text-align: center;
   padding: 2rem;
   line-height: 1.2;
-}
-
-/* Export Links */
-.export-links {
-  position: absolute;
-  bottom: 0.75rem;
-  left: 50%;
-  transform: translateX(-50%);
-  display: flex;
-  gap: 0.5rem;
-  align-items: center;
-  z-index: 10;
-  font-size: 0.75rem;
-  color: #999;
-}
-
-.export-link {
-  cursor: pointer;
-  transition: color 0.2s ease;
-  font-weight: 400;
-}
-
-.export-link:hover {
-  color: #000;
-}
-
-.export-separator {
-  color: #ccc;
-  user-select: none;
 }
 
 /* Export Progress Overlay */
@@ -229,23 +174,5 @@ body {
   font-size: 1rem;
   font-weight: 600;
   margin-bottom: 1rem;
-}
-
-.cancel-button {
-  padding: 0.4rem 1.2rem;
-  font-size: 0.85rem;
-  font-weight: 500;
-  border: 1px solid #000000;
-  background: #ffffff;
-  color: #000000;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  font-family: 'SF Pro Display', sans-serif;
-}
-
-.cancel-button:hover {
-  background: #000000;
-  color: #ffffff;
 }
 
