@@ -1,5 +1,4 @@
 import { parsePresentation } from './parsePresentation'
-import html2canvas from 'html2canvas'
 
 /**
  * Record a presentation as video using MediaRecorder API
@@ -10,9 +9,8 @@ import html2canvas from 'html2canvas'
  */
 export async function recordPresentationAsVideo(presentation, options = {}, onProgress) {
   const {
-    fps = 30,
     slideDelay = 3000,
-    videoBitrate = 2500000
+    videoBitrate = 5000000
   } = options
 
   const slides = parsePresentation(presentation.content, presentation.path)
@@ -39,21 +37,15 @@ export async function recordPresentationAsVideo(presentation, options = {}, onPr
     throw new Error('No supported video format found')
   }
 
-  // Create canvas for recording
-  const canvas = document.createElement('canvas')
-  canvas.width = 1920
-  canvas.height = 1080
-  const ctx = canvas.getContext('2d')
-
-  // Create hidden container for rendering
+  // Create fullscreen container for rendering
   const container = document.createElement('div')
   container.style.position = 'fixed'
-  container.style.top = '-10000px'
-  container.style.left = '-10000px'
-  container.style.width = '1920px'
-  container.style.height = '1080px'
-  container.style.overflow = 'hidden'
-  container.style.zIndex = '-9999'
+  container.style.top = '0'
+  container.style.left = '0'
+  container.style.width = '100vw'
+  container.style.height = '100vh'
+  container.style.zIndex = '10000'
+  container.style.backgroundColor = '#000000'
   document.body.appendChild(container)
 
   const chunks = []
@@ -61,8 +53,22 @@ export async function recordPresentationAsVideo(presentation, options = {}, onPr
   let stream = null
 
   try {
-    // Start canvas stream
-    stream = canvas.captureStream(fps)
+    // Capture the container as a stream
+    stream = await navigator.mediaDevices.getDisplayMedia({
+      video: {
+        displaySurface: 'browser',
+        width: 1920,
+        height: 1080,
+        frameRate: 30
+      }
+    }).catch(() => {
+      // Fallback: use canvas stream
+      return null
+    })
+
+    if (!stream) {
+      throw new Error('Could not capture screen. Please allow screen recording when prompted.')
+    }
 
     // Set up MediaRecorder
     recorder = new MediaRecorder(stream, {
@@ -76,10 +82,15 @@ export async function recordPresentationAsVideo(presentation, options = {}, onPr
       }
     }
 
+    const recordingPromise = new Promise((resolve, reject) => {
+      recorder.onstop = resolve
+      recorder.onerror = reject
+    })
+
     // Start recording
     recorder.start()
 
-    // Record each slide
+    // Render each slide
     for (let i = 0; i < slides.length; i++) {
       const slide = slides[i]
 
@@ -87,28 +98,11 @@ export async function recordPresentationAsVideo(presentation, options = {}, onPr
         onProgress(i + 1, slides.length)
       }
 
-      // Render slide to DOM
-      renderSlideToDOM(container, slide)
+      // Render slide
+      await renderSlideToDOM(container, slide)
 
-      // Wait for images to load
-      await waitForSlideReady(container, slide)
-
-      // Calculate slide duration
-      let duration = slideDelay
-      if (slide.type === 'text') {
-        const words = (slide.content || '').split(' ')
-        const animationTime = words.length * 30 + 800
-        duration = Math.max(slideDelay, animationTime)
-      }
-
-      // Capture frames for this slide
-      const frameInterval = 1000 / fps
-      const totalFrames = Math.ceil(duration / frameInterval)
-
-      for (let frame = 0; frame < totalFrames; frame++) {
-        await captureFrame(container, canvas, ctx)
-        await new Promise(resolve => setTimeout(resolve, frameInterval))
-      }
+      // Wait for slide duration
+      await new Promise(resolve => setTimeout(resolve, slideDelay))
 
       // Clean up
       container.innerHTML = ''
@@ -116,11 +110,10 @@ export async function recordPresentationAsVideo(presentation, options = {}, onPr
 
     // Stop recording
     recorder.stop()
+    await recordingPromise
 
-    // Wait for final data
-    await new Promise((resolve) => {
-      recorder.onstop = resolve
-    })
+    // Stop all tracks
+    stream.getTracks().forEach(track => track.stop())
 
     // Create blob and download
     const blob = new Blob(chunks, { type: mimeType })
@@ -131,6 +124,9 @@ export async function recordPresentationAsVideo(presentation, options = {}, onPr
     a.click()
     URL.revokeObjectURL(url)
 
+  } catch (error) {
+    console.error('Video recording error:', error)
+    throw error
   } finally {
     // Clean up
     if (recorder && recorder.state !== 'inactive') {
@@ -139,14 +135,16 @@ export async function recordPresentationAsVideo(presentation, options = {}, onPr
     if (stream) {
       stream.getTracks().forEach(track => track.stop())
     }
-    document.body.removeChild(container)
+    if (container && container.parentNode) {
+      document.body.removeChild(container)
+    }
   }
 }
 
 /**
- * Render a slide to DOM using pure HTML/CSS
+ * Render a slide to DOM
  */
-function renderSlideToDOM(container, slide) {
+async function renderSlideToDOM(container, slide) {
   container.innerHTML = ''
 
   const slideDiv = document.createElement('div')
@@ -189,6 +187,8 @@ function renderSlideToDOM(container, slide) {
     } else if (fit === 'inset') {
       img.style.maxWidth = '90%'
       img.style.maxHeight = '90%'
+      img.style.width = 'auto'
+      img.style.height = 'auto'
       img.style.objectFit = 'contain'
     } else if (fit === 'positioned') {
       img.style.width = slide.width || 'auto'
@@ -200,64 +200,65 @@ function renderSlideToDOM(container, slide) {
 
     slideDiv.appendChild(img)
 
-  } else if (slide.type === 'video') {
-    // For video, show play icon placeholder
-    const videoPlaceholder = document.createElement('div')
-    videoPlaceholder.style.width = '100%'
-    videoPlaceholder.style.height = '100%'
-    videoPlaceholder.style.display = 'flex'
-    videoPlaceholder.style.alignItems = 'center'
-    videoPlaceholder.style.justifyContent = 'center'
-    videoPlaceholder.style.fontSize = '8rem'
-    videoPlaceholder.textContent = '▶'
-    videoPlaceholder.style.color = '#ffffff'
+    // Wait for image to load
+    await new Promise((resolve) => {
+      if (img.complete) {
+        resolve()
+      } else {
+        img.onload = resolve
+        img.onerror = resolve
+        setTimeout(resolve, 2000)
+      }
+    })
 
-    slideDiv.appendChild(videoPlaceholder)
+  } else if (slide.type === 'video' && slide.src) {
+    // Render video slide
+    const video = document.createElement('video')
+    video.src = slide.src
+    video.autoplay = true
+    video.loop = slide.loop || false
+    video.muted = slide.muted !== false
+    video.playsInline = true
+    video.style.display = 'block'
+
+    const fit = slide.fit || 'fullscreen'
+    if (fit === 'fullscreen') {
+      video.style.width = '100%'
+      video.style.height = '100%'
+      video.style.objectFit = 'cover'
+    } else if (fit === 'inset') {
+      video.style.maxWidth = '90%'
+      video.style.maxHeight = '90%'
+      video.style.width = 'auto'
+      video.style.height = 'auto'
+      video.style.objectFit = 'contain'
+    } else if (fit === 'positioned') {
+      video.style.width = slide.width || 'auto'
+      video.style.height = slide.height || 'auto'
+      video.style.maxWidth = '90%'
+      video.style.maxHeight = '90%'
+      video.style.objectFit = 'contain'
+    }
+
+    slideDiv.appendChild(video)
+
+    // Wait for video to be ready
+    await new Promise((resolve) => {
+      if (video.readyState >= 2) {
+        video.play().catch(() => {})
+        resolve()
+      } else {
+        video.oncanplay = () => {
+          video.play().catch(() => {})
+          resolve()
+        }
+        video.onerror = resolve
+        setTimeout(resolve, 2000)
+      }
+    })
   }
 
   container.appendChild(slideDiv)
 }
 
-/**
- * Wait for slide to be ready (images loaded, etc)
- */
-async function waitForSlideReady(container, slide) {
-  if (slide.type === 'image' && slide.src) {
-    const images = container.getElementsByTagName('img')
-    const imagePromises = Array.from(images).map(img => {
-      return new Promise((resolve) => {
-        if (img.complete) {
-          resolve()
-        } else {
-          img.onload = resolve
-          img.onerror = resolve
-          setTimeout(resolve, 3000)
-        }
-      })
-    })
-    await Promise.all(imagePromises)
-  }
-  await new Promise(resolve => setTimeout(resolve, 200))
-}
-
-/**
- * Capture current container state to canvas
- */
-async function captureFrame(container, canvas, ctx) {
-  try {
-    const tempCanvas = await html2canvas(container, {
-      canvas: null,
-      scale: 1,
-      useCORS: true,
-      allowTaint: true,
-      logging: false,
-      width: 1920,
-      height: 1080
-    })
-
-    ctx.drawImage(tempCanvas, 0, 0)
-  } catch (e) {
-    console.error('Frame capture failed:', e)
-  }
-}
 

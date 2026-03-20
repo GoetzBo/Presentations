@@ -16,7 +16,6 @@ export async function exportPresentationAsPDF(presentation, onProgress) {
   }
 
   // Create PDF with 16:9 landscape orientation
-  // Using 297mm width x 167mm height (16:9 ratio)
   const pdf = new jsPDF({
     orientation: 'landscape',
     unit: 'mm',
@@ -28,7 +27,7 @@ export async function exportPresentationAsPDF(presentation, onProgress) {
   container.style.position = 'fixed'
   container.style.top = '-10000px'
   container.style.left = '-10000px'
-  container.style.width = '1600px' // 16:9 aspect ratio
+  container.style.width = '1600px'
   container.style.height = '900px'
   container.style.overflow = 'hidden'
   container.style.zIndex = '-9999'
@@ -48,14 +47,14 @@ export async function exportPresentationAsPDF(presentation, onProgress) {
       }
 
       // Render slide
-      renderSlideToDOM(container, slide)
+      await renderSlideToDOM(container, slide)
 
-      // Wait for images to load and animations to complete
+      // Wait for content to be ready
       await waitForSlideReady(container, slide)
 
       // Capture slide with html2canvas
       const canvas = await html2canvas(container, {
-        scale: 2, // High quality
+        scale: 2,
         useCORS: true,
         allowTaint: true,
         backgroundColor: slide.background || '#ffffff',
@@ -83,9 +82,9 @@ export async function exportPresentationAsPDF(presentation, onProgress) {
 }
 
 /**
- * Render a slide to DOM using pure HTML/CSS
+ * Render a slide to DOM
  */
-function renderSlideToDOM(container, slide) {
+async function renderSlideToDOM(container, slide) {
   container.innerHTML = ''
 
   const slideDiv = document.createElement('div')
@@ -115,50 +114,103 @@ function renderSlideToDOM(container, slide) {
     slideDiv.appendChild(textDiv)
 
   } else if (slide.type === 'image' && slide.src) {
-    // Render image slide
+    // Render image slide with proper fit
     const img = document.createElement('img')
     img.src = slide.src
-    img.style.display = 'block'
+    img.crossOrigin = 'anonymous'
 
     const fit = slide.fit || 'fullscreen'
+
     if (fit === 'fullscreen') {
       img.style.width = '100%'
       img.style.height = '100%'
       img.style.objectFit = 'cover'
+      img.style.display = 'block'
     } else if (fit === 'inset') {
       img.style.maxWidth = '90%'
       img.style.maxHeight = '90%'
+      img.style.width = 'auto'
+      img.style.height = 'auto'
       img.style.objectFit = 'contain'
+      img.style.display = 'block'
     } else if (fit === 'positioned') {
       img.style.width = slide.width || 'auto'
       img.style.height = slide.height || 'auto'
       img.style.maxWidth = '90%'
       img.style.maxHeight = '90%'
       img.style.objectFit = 'contain'
+      img.style.display = 'block'
     }
 
     slideDiv.appendChild(img)
 
-  } else if (slide.type === 'video') {
-    // For video, show first frame or placeholder
-    const videoPlaceholder = document.createElement('div')
-    videoPlaceholder.style.width = '100%'
-    videoPlaceholder.style.height = '100%'
-    videoPlaceholder.style.display = 'flex'
-    videoPlaceholder.style.alignItems = 'center'
-    videoPlaceholder.style.justifyContent = 'center'
-    videoPlaceholder.style.fontSize = '8rem'
-    videoPlaceholder.textContent = '▶'
-    videoPlaceholder.style.color = '#ffffff'
+  } else if (slide.type === 'video' && slide.src) {
+    // Render video as screenshot from middle of video
+    const video = document.createElement('video')
+    video.src = slide.src
+    video.crossOrigin = 'anonymous'
+    video.preload = 'metadata'
+    video.muted = true
+    video.playsInline = true
+    video.style.display = 'none'
 
-    slideDiv.appendChild(videoPlaceholder)
+    slideDiv.appendChild(video)
+
+    // Wait for video metadata to load
+    await new Promise((resolve) => {
+      video.onloadedmetadata = () => {
+        // Seek to middle of video
+        video.currentTime = video.duration / 2
+      }
+      video.onseeked = resolve
+      video.onerror = resolve
+      setTimeout(resolve, 3000) // Timeout
+    })
+
+    // Create canvas to capture video frame
+    const canvas = document.createElement('canvas')
+    canvas.width = video.videoWidth || 1920
+    canvas.height = video.videoHeight || 1080
+    const ctx = canvas.getContext('2d')
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height)
+
+    // Convert canvas to image
+    const img = document.createElement('img')
+    img.src = canvas.toDataURL('image/png')
+
+    const fit = slide.fit || 'fullscreen'
+
+    if (fit === 'fullscreen') {
+      img.style.width = '100%'
+      img.style.height = '100%'
+      img.style.objectFit = 'cover'
+      img.style.display = 'block'
+    } else if (fit === 'inset') {
+      img.style.maxWidth = '90%'
+      img.style.maxHeight = '90%'
+      img.style.width = 'auto'
+      img.style.height = 'auto'
+      img.style.objectFit = 'contain'
+      img.style.display = 'block'
+    } else if (fit === 'positioned') {
+      img.style.width = slide.width || 'auto'
+      img.style.height = slide.height || 'auto'
+      img.style.maxWidth = '90%'
+      img.style.maxHeight = '90%'
+      img.style.objectFit = 'contain'
+      img.style.display = 'block'
+    }
+
+    // Remove video, add image
+    slideDiv.removeChild(video)
+    slideDiv.appendChild(img)
   }
 
   container.appendChild(slideDiv)
 }
 
 /**
- * Wait for slide to be ready (images loaded, etc)
+ * Wait for slide to be ready
  */
 async function waitForSlideReady(container, slide) {
   if (slide.type === 'image' && slide.src) {
@@ -166,12 +218,12 @@ async function waitForSlideReady(container, slide) {
     const images = container.getElementsByTagName('img')
     const imagePromises = Array.from(images).map(img => {
       return new Promise((resolve) => {
-        if (img.complete) {
+        if (img.complete && img.naturalHeight !== 0) {
           resolve()
         } else {
           img.onload = resolve
-          img.onerror = resolve // Continue even if image fails
-          setTimeout(resolve, 3000) // Timeout after 3s
+          img.onerror = resolve
+          setTimeout(resolve, 3000)
         }
       })
     })
@@ -179,6 +231,7 @@ async function waitForSlideReady(container, slide) {
   }
 
   // Small delay to ensure rendering is complete
-  await new Promise(resolve => setTimeout(resolve, 300))
+  await new Promise(resolve => setTimeout(resolve, 500))
 }
+
 

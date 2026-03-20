@@ -226,21 +226,22 @@ function PresentationSelector({ onSelect }) {
               </div>
               <div className="presentation-title">{presentation.name}</div>
               {hoveredCard === presentation.id && (
-                <div className="export-buttons">
-                  <button
-                    className="export-btn"
+                <div className="export-links">
+                  <span
+                    className="export-link"
                     onClick={(e) => handleExportPDF(e, presentation)}
                     title="Export as PDF"
                   >
-                    📄 PDF
-                  </button>
-                  <button
-                    className="export-btn"
+                    PDF
+                  </span>
+                  <span className="export-separator">/</span>
+                  <span
+                    className="export-link"
                     onClick={(e) => handleExportVideo(e, presentation)}
                     title="Export as Video"
                   >
-                    🎥 Video
-                  </button>
+                    Video
+                  </span>
                 </div>
               )}
             </div>
