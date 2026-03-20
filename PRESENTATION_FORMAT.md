@@ -109,11 +109,17 @@ assets/my-image.jpg
 ```
 Assets are stored in the `assets/` folder within your presentation folder.
 
-### Absolute URLs
+### Absolute URLs (Supported!)
 ```markdown
 https://example.com/image.jpg
+https://yourdomain.com/videos/demo.mp4
 ```
-You can also use absolute URLs for external media.
+You can use absolute URLs for external media - perfect for:
+- External CDN assets
+- Shared media libraries
+- Online resources
+
+**Note:** External URLs require CORS support and internet connection during presentation.
 
 ---
 
