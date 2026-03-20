@@ -25,9 +25,15 @@ function PresentationViewer({ presentation, onExit }) {
         const img = new Image()
         img.src = slide.src
       } else if (slide.type === 'video') {
-        const video = document.createElement('video')
-        video.src = slide.src
-        video.preload = 'auto'
+        // Check if it's a YouTube URL
+        const isYouTube = slide.src && (slide.src.includes('youtube.com') || slide.src.includes('youtu.be'))
+        if (!isYouTube) {
+          // Only preload direct video files, not YouTube
+          const video = document.createElement('video')
+          video.src = slide.src
+          video.preload = 'auto'
+        }
+        // YouTube videos are preloaded by the browser when iframe is created
       }
     })
 
@@ -93,6 +99,9 @@ function PresentationViewer({ presentation, onExit }) {
   if (slides.length === 0) return null
 
   const slide = slides[currentSlide]
+
+  // Debug logging
+  console.log('Current slide:', currentSlide, slide)
 
   return (
     <div className="viewer">

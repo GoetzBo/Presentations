@@ -5,8 +5,12 @@ function VideoSlide({ src, fit = 'fullscreen', background = '#000000', loop = tr
   const videoRef = useRef(null)
   const [isPlaying, setIsPlaying] = useState(true)
 
+  // Debug
+  console.log('VideoSlide props:', { src, fit, background, loop, muted })
+
   // Check if URL is a YouTube link
   const isYouTube = src && (src.includes('youtube.com') || src.includes('youtu.be'))
+  console.log('isYouTube:', isYouTube)
 
   // Convert YouTube URL to embed URL
   const getYouTubeEmbedUrl = (url) => {
@@ -20,7 +24,8 @@ function VideoSlide({ src, fit = 'fullscreen', background = '#000000', loop = tr
     }
 
     if (videoId) {
-      return `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=${muted ? 1 : 0}&loop=${loop ? 1 : 0}&playlist=${videoId}`
+      // Remove controls, info, and branding. Add preload.
+      return `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=${muted ? 1 : 0}&loop=${loop ? 1 : 0}&playlist=${videoId}&controls=0&showinfo=0&rel=0&modestbranding=1&playsinline=1`
     }
 
     return url

@@ -5,6 +5,9 @@
  * @returns {Array} Array of slide objects
  */
 export function parsePresentation(markdown, presentationPath) {
+  console.log('parsePresentation called with path:', presentationPath);
+  console.log('Markdown preview:', markdown ? markdown.substring(0, 200) : 'NO MARKDOWN');
+
   if (!markdown || typeof markdown !== 'string') {
     return [];
   }
@@ -16,9 +19,12 @@ export function parsePresentation(markdown, presentationPath) {
 
   const finishSlide = () => {
     if (currentSlide) {
+      console.log('Finishing slide:', currentSlide.type, 'contentLines:', contentLines);
+
       // Handle content
       if (contentLines.length > 0) {
         const content = contentLines.join('\n').trim();
+        console.log('Content:', content);
 
         // For image/video slides without explicit src, treat content as file path
         if ((currentSlide.type === 'image' || currentSlide.type === 'video') && !currentSlide.src && content) {
@@ -27,11 +33,13 @@ export function parsePresentation(markdown, presentationPath) {
           } else {
             currentSlide.src = content;
           }
+          console.log('Parsed media slide:', currentSlide.type, 'src:', currentSlide.src);
         } else {
           currentSlide.content = content;
         }
       }
 
+      console.log('Final slide object:', currentSlide);
       slides.push(currentSlide);
       contentLines = [];
     }
@@ -63,9 +71,11 @@ export function parsePresentation(markdown, presentationPath) {
 
     // If we're inside a slide
     if (currentSlide) {
-      // Check for property lines (key: value)
+      // Check for property lines (key: value), but exclude URLs (https:// or http://)
       const propMatch = line.match(/^(\w+):\s*(.+)$/);
-      if (propMatch && !line.startsWith('    ') && !line.startsWith('\t')) {
+      const isUrl = line.trim().startsWith('http://') || line.trim().startsWith('https://');
+
+      if (propMatch && !isUrl && !line.startsWith('    ') && !line.startsWith('\t')) {
         const [, key, value] = propMatch;
 
         // Parse value based on type
