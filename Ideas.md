@@ -189,3 +189,29 @@ React + Vite
 ## Ready to Build! 🚀
 All core decisions made. Time to scaffold the project and start with Phase 1.
 
+---
+
+## Backlog / Future Enhancements
+
+### GitHub Pages Hosting 🌐
+**Goal**: Deploy presentations to GitHub Pages for access from anywhere
+
+**Options to Explore:**
+1. **GitHub Actions Auto-Deploy** (Recommended)
+   - Automatic build and deploy on every push
+   - Clean workflow, no manual steps
+   - Free for public repos
+
+2. **Hosting Considerations:**
+   - Public repo = presentations visible to anyone
+   - Private repo requires GitHub Pro for Pages
+   - Alternative: Self-hosted on private server
+
+**Benefits:**
+- Present from any device with internet
+- Share presentations via URL
+- Version control for all presentations
+- Single source of truth
+
+**Status**: On hold - implement later when needed for public presentations
+
