@@ -16,7 +16,8 @@ This is a presentations project located at `/Users/D030892/Documents/GitHub/Pres
 ## Workflow
 1. Discuss and document ideas in Ideas.md
 2. Get user approval before implementation
-3. Maintain clean, organized codebase
+3. **Enter plan mode for new features before implementing**
+4. Maintain clean, organized codebase
 
 ## Notes
 - Project initialized: 2026-03-19

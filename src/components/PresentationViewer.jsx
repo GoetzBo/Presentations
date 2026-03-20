@@ -3,6 +3,7 @@ import { AnimatePresence } from 'framer-motion'
 import TextSlide from './slides/TextSlide'
 import ImageSlide from './slides/ImageSlide'
 import VideoSlide from './slides/VideoSlide'
+import { parsePresentation } from '../utils/parsePresentation'
 
 function PresentationViewer({ presentation, onExit }) {
   const [slides, setSlides] = useState([])
@@ -12,21 +13,14 @@ function PresentationViewer({ presentation, onExit }) {
   const previousSlideIndex = useRef(0)
 
   useEffect(() => {
-    // TODO: Load and parse presentation markdown
-    // For now, create demo slides
-    const demoSlides = [
-      { type: 'text', content: 'Welcome to the Future', animation: 'cascade-up', color: '#000000', background: '#ffffff' },
-      { type: 'image', src: '/presentations/demo/assets/merlin_176725119_67d397c8-13ff-4150-af39-e7ffa3fe95f4-articleLarge.jpg.webp', alt: 'Demo image', fit: 'fullscreen', background: '#000000' },
-      { type: 'video', src: '/presentations/demo/assets/CamSwoosh-Oktopus10.mp4', fit: 'fullscreen', background: '#000000', loop: true, muted: true },
-      { type: 'text', content: 'Make it exist first', animation: 'cascade-up', color: '#000000', background: '#ffffff' },
-      { type: 'video', src: '/presentations/demo/assets/CamSwoosh-Oktopus10.mp4', fit: 'positioned', width: '1280px', background: '#ffffff', loop: true, muted: true },
-      { type: 'image', src: '/presentations/demo/assets/merlin_176725119_67d397c8-13ff-4150-af39-e7ffa3fe95f4-articleLarge.jpg.webp', alt: 'Demo image', fit: 'inset', background: '#ffffff' },
-      { type: 'text', content: 'Then make it beautiful', animation: 'cascade-up', color: '#000000', background: '#ffffff' }
-    ]
-    setSlides(demoSlides)
+    if (!presentation) return
+
+    // Parse markdown into slides
+    const parsedSlides = parsePresentation(presentation.content, presentation.path)
+    setSlides(parsedSlides)
 
     // Preload images and videos
-    demoSlides.forEach(slide => {
+    parsedSlides.forEach(slide => {
       if (slide.type === 'image') {
         const img = new Image()
         img.src = slide.src
@@ -36,6 +30,10 @@ function PresentationViewer({ presentation, onExit }) {
         video.preload = 'auto'
       }
     })
+
+    // Reset to first slide when presentation changes
+    setCurrentSlide(0)
+    setIsStarted(false)
   }, [presentation])
 
   useEffect(() => {
@@ -72,9 +70,14 @@ function PresentationViewer({ presentation, onExit }) {
       } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
         setCurrentSlide((prev) => Math.max(prev - 1, 0))
       } else if (e.key === 'Escape') {
-        onExit()
+        // Escape exits fullscreen if in fullscreen, otherwise returns to selection page
+        if (document.fullscreenElement) {
+          document.exitFullscreen()
+        } else {
+          onExit()
+        }
       } else if (e.key === 'f' || e.key === 'F') {
-        // Toggle fullscreen
+        // F toggles fullscreen on/off
         if (!document.fullscreenElement) {
           document.documentElement.requestFullscreen()
         } else {
