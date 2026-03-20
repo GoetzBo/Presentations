@@ -198,13 +198,24 @@ async function renderSlideToDOM(container, slide) {
       slideDiv.style.alignItems = 'center'
       slideDiv.style.justifyContent = 'center'
 
+      // Use original image dimensions, but scale down if too large
+      const maxWidth = 1600 * 0.9  // 90% of slide width
+      const maxHeight = 900 * 0.9  // 90% of slide height
+
+      let displayWidth = img.naturalWidth
+      let displayHeight = img.naturalHeight
+
+      // Scale down if larger than max dimensions, maintaining aspect ratio
+      if (displayWidth > maxWidth || displayHeight > maxHeight) {
+        const scale = Math.min(maxWidth / displayWidth, maxHeight / displayHeight)
+        displayWidth = displayWidth * scale
+        displayHeight = displayHeight * scale
+      }
+
       const displayImg = document.createElement('img')
       displayImg.src = img.src
-      displayImg.style.width = slide.width || 'auto'
-      displayImg.style.height = slide.height || 'auto'
-      displayImg.style.maxWidth = '90%'
-      displayImg.style.maxHeight = '90%'
-      displayImg.style.objectFit = 'contain'
+      displayImg.style.width = `${displayWidth}px`
+      displayImg.style.height = `${displayHeight}px`
       displayImg.style.display = 'block'
 
       slideDiv.appendChild(displayImg)
@@ -290,16 +301,22 @@ async function renderSlideToDOM(container, slide) {
         img.style.objectFit = 'contain'
         img.style.display = 'block'
       } else if (fit === 'positioned') {
-        // Use specified dimensions
-        if (slide.width) {
-          img.style.width = slide.width
+        // Use original video dimensions, but scale down if too large
+        const maxWidth = 1600 * 0.9  // 90% of slide width
+        const maxHeight = 900 * 0.9  // 90% of slide height
+
+        let displayWidth = video.videoWidth
+        let displayHeight = video.videoHeight
+
+        // Scale down if larger than max dimensions, maintaining aspect ratio
+        if (displayWidth > maxWidth || displayHeight > maxHeight) {
+          const scale = Math.min(maxWidth / displayWidth, maxHeight / displayHeight)
+          displayWidth = displayWidth * scale
+          displayHeight = displayHeight * scale
         }
-        if (slide.height) {
-          img.style.height = slide.height
-        }
-        img.style.maxWidth = '90%'
-        img.style.maxHeight = '90%'
-        img.style.objectFit = 'contain'
+
+        img.style.width = `${displayWidth}px`
+        img.style.height = `${displayHeight}px`
         img.style.display = 'block'
       }
 
