@@ -72,10 +72,15 @@ assets/your-video.mp4
 - `muted`: `true` or `false` (default: `true`)
 - Path to video (relative to presentation folder)
 
-**Supported formats:** MP4, WebM
+**Supported formats:**
+- Direct video files: MP4, WebM
+- YouTube URLs: `https://www.youtube.com/watch?v=VIDEO_ID` or `https://youtu.be/VIDEO_ID`
+
+**YouTube Support:**
+YouTube URLs are automatically converted to embeds and support autoplay, loop, and mute options.
 
 **Controls:**
-- **Spacebar**: Play/Pause video during presentation
+- **Spacebar**: Play/Pause video during presentation (only for direct video files, not YouTube)
 
 ---
 

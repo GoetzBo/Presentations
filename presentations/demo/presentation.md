@@ -48,7 +48,7 @@ fit: fullscreen
 background: #000000
 loop: true
 muted: true
-assets/CamSwoosh-Oktopus10.mp4
+https://www.youtube.com/watch?v=-pP8jpHIceQ
 
 ## slide: text
 animation: cascade-up

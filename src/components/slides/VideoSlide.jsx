@@ -5,6 +5,27 @@ function VideoSlide({ src, fit = 'fullscreen', background = '#000000', loop = tr
   const videoRef = useRef(null)
   const [isPlaying, setIsPlaying] = useState(true)
 
+  // Check if URL is a YouTube link
+  const isYouTube = src && (src.includes('youtube.com') || src.includes('youtu.be'))
+
+  // Convert YouTube URL to embed URL
+  const getYouTubeEmbedUrl = (url) => {
+    let videoId = ''
+
+    if (url.includes('youtube.com/watch')) {
+      const urlParams = new URLSearchParams(new URL(url).search)
+      videoId = urlParams.get('v')
+    } else if (url.includes('youtu.be/')) {
+      videoId = url.split('youtu.be/')[1].split('?')[0]
+    }
+
+    if (videoId) {
+      return `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=${muted ? 1 : 0}&loop=${loop ? 1 : 0}&playlist=${videoId}`
+    }
+
+    return url
+  }
+
   useEffect(() => {
     // Auto-play video when slide loads
     if (videoRef.current) {
@@ -88,14 +109,24 @@ function VideoSlide({ src, fit = 'fullscreen', background = '#000000', loop = tr
         filter: { duration: 0.8, ease: 'easeInOut' }
       }}
     >
-      <video
-        ref={videoRef}
-        src={src}
-        loop={loop}
-        muted={muted}
-        playsInline
-        style={getVideoStyle()}
-      />
+      {isYouTube ? (
+        <iframe
+          src={getYouTubeEmbedUrl(src)}
+          style={getVideoStyle()}
+          frameBorder="0"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          allowFullScreen
+        />
+      ) : (
+        <video
+          ref={videoRef}
+          src={src}
+          loop={loop}
+          muted={muted}
+          playsInline
+          style={getVideoStyle()}
+        />
+      )}
     </motion.div>
   )
 }
