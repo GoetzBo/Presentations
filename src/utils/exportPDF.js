@@ -1,5 +1,6 @@
 import { jsPDF } from 'jspdf'
 import html2canvas from 'html2canvas'
+import QRCode from 'qrcode'
 import { parsePresentation } from './parsePresentation'
 
 /**
@@ -116,15 +117,13 @@ async function renderSlideToDOM(container, slide) {
   slideDiv.style.backgroundColor = slide.background || '#ffffff'
   slideDiv.style.position = 'relative'
   slideDiv.style.overflow = 'hidden'
+  slideDiv.style.display = 'flex'
+  slideDiv.style.alignItems = 'center'
+  slideDiv.style.justifyContent = 'center'
 
   if (slide.type === 'text') {
     // Render text slide
     const textDiv = document.createElement('div')
-    textDiv.style.position = 'absolute'
-    textDiv.style.top = '50%'
-    textDiv.style.left = '50%'
-    textDiv.style.transform = 'translate(-50%, -50%)'
-    textDiv.style.width = '100%'
     textDiv.style.fontSize = '6rem'
     textDiv.style.fontWeight = '900'
     textDiv.style.fontFamily = '"SF Pro Display", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif'
@@ -138,7 +137,7 @@ async function renderSlideToDOM(container, slide) {
     slideDiv.appendChild(textDiv)
 
   } else if (slide.type === 'image' && slide.src) {
-    // Render image slide with proper fit
+    // Render image slide - same as ImageSlide component
     const img = document.createElement('img')
     img.src = slide.src
     img.crossOrigin = 'anonymous'
@@ -146,34 +145,27 @@ async function renderSlideToDOM(container, slide) {
     const fit = slide.fit || 'fullscreen'
 
     if (fit === 'fullscreen') {
-      // Position absolutely to ensure proper coverage
-      img.style.position = 'absolute'
-      img.style.top = '0'
-      img.style.left = '0'
       img.style.width = '100%'
       img.style.height = '100%'
       img.style.objectFit = 'cover'
-      img.style.objectPosition = 'center'
+      img.style.display = 'block'
+      // Override flex to ensure image fills entire container
+      slideDiv.style.display = 'block'
+      slideDiv.style.padding = '0'
     } else if (fit === 'inset') {
-      img.style.position = 'absolute'
-      img.style.top = '50%'
-      img.style.left = '50%'
-      img.style.transform = 'translate(-50%, -50%)'
       img.style.maxWidth = '90%'
       img.style.maxHeight = '90%'
       img.style.width = 'auto'
       img.style.height = 'auto'
       img.style.objectFit = 'contain'
+      img.style.display = 'block'
     } else if (fit === 'positioned') {
-      img.style.position = 'absolute'
-      img.style.top = '50%'
-      img.style.left = '50%'
-      img.style.transform = 'translate(-50%, -50%)'
       img.style.width = slide.width || 'auto'
       img.style.height = slide.height || 'auto'
       img.style.maxWidth = '90%'
       img.style.maxHeight = '90%'
       img.style.objectFit = 'contain'
+      img.style.display = 'block'
     }
 
     slideDiv.appendChild(img)
@@ -215,34 +207,27 @@ async function renderSlideToDOM(container, slide) {
     const fit = slide.fit || 'fullscreen'
 
     if (fit === 'fullscreen') {
-      // Position absolutely to ensure proper coverage
-      img.style.position = 'absolute'
-      img.style.top = '0'
-      img.style.left = '0'
       img.style.width = '100%'
       img.style.height = '100%'
       img.style.objectFit = 'cover'
-      img.style.objectPosition = 'center'
+      img.style.display = 'block'
+      // Override flex to ensure image fills entire container
+      slideDiv.style.display = 'block'
+      slideDiv.style.padding = '0'
     } else if (fit === 'inset') {
-      img.style.position = 'absolute'
-      img.style.top = '50%'
-      img.style.left = '50%'
-      img.style.transform = 'translate(-50%, -50%)'
       img.style.maxWidth = '90%'
       img.style.maxHeight = '90%'
       img.style.width = 'auto'
       img.style.height = 'auto'
       img.style.objectFit = 'contain'
+      img.style.display = 'block'
     } else if (fit === 'positioned') {
-      img.style.position = 'absolute'
-      img.style.top = '50%'
-      img.style.left = '50%'
-      img.style.transform = 'translate(-50%, -50%)'
       img.style.width = slide.width || 'auto'
       img.style.height = slide.height || 'auto'
       img.style.maxWidth = '90%'
       img.style.maxHeight = '90%'
       img.style.objectFit = 'contain'
+      img.style.display = 'block'
     }
 
     // Remove video, add image
@@ -270,19 +255,18 @@ async function renderQRCodePage(container) {
   pageDiv.style.justifyContent = 'center'
   pageDiv.style.gap = '2rem'
 
-  // QR Code placeholder (dummy for now)
-  const qrPlaceholder = document.createElement('div')
-  qrPlaceholder.style.width = '300px'
-  qrPlaceholder.style.height = '300px'
-  qrPlaceholder.style.backgroundColor = '#000000'
-  qrPlaceholder.style.display = 'flex'
-  qrPlaceholder.style.alignItems = 'center'
-  qrPlaceholder.style.justifyContent = 'center'
-  qrPlaceholder.style.color = '#ffffff'
-  qrPlaceholder.style.fontSize = '2rem'
-  qrPlaceholder.style.fontWeight = '900'
-  qrPlaceholder.style.fontFamily = '"SF Pro Display", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif'
-  qrPlaceholder.textContent = 'QR CODE'
+  // Generate QR Code
+  const qrCanvas = document.createElement('canvas')
+  await QRCode.toCanvas(qrCanvas, 'https://www.antighost.de', {
+    width: 400,
+    margin: 2,
+    color: {
+      dark: '#000000',
+      light: '#ffffff'
+    }
+  })
+
+  pageDiv.appendChild(qrCanvas)
 
   // Text below QR code
   const textDiv = document.createElement('div')
@@ -291,7 +275,6 @@ async function renderQRCodePage(container) {
   textDiv.style.fontFamily = '"SF Pro Display", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif'
   textDiv.textContent = 'Scan to view presentation'
 
-  pageDiv.appendChild(qrPlaceholder)
   pageDiv.appendChild(textDiv)
   container.appendChild(pageDiv)
 }
@@ -320,6 +303,7 @@ async function waitForSlideReady(container, slide) {
   // Small delay to ensure rendering is complete
   await new Promise(resolve => setTimeout(resolve, 500))
 }
+
 
 
 
