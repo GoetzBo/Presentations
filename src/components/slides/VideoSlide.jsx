@@ -8,6 +8,26 @@ function VideoSlide({ src, fit = 'fullscreen', background = '#000000', loop = tr
   // Debug
   console.log('VideoSlide props:', { src, fit, background, loop, muted })
 
+  // Handle missing src gracefully
+  if (!src) {
+    return (
+      <motion.div
+        className="slide"
+        style={{
+          backgroundColor: background,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center'
+        }}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+      >
+        {/* Empty slide - video source missing */}
+      </motion.div>
+    )
+  }
+
   // Check if URL is a YouTube link
   const isYouTube = src && (src.includes('youtube.com') || src.includes('youtu.be'))
   console.log('isYouTube:', isYouTube)
@@ -124,6 +144,9 @@ function VideoSlide({ src, fit = 'fullscreen', background = '#000000', loop = tr
           frameBorder="0"
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
           allowFullScreen
+          onError={(e) => {
+            console.log('YouTube iframe error:', e)
+          }}
         />
       ) : (
         <video
@@ -133,6 +156,11 @@ function VideoSlide({ src, fit = 'fullscreen', background = '#000000', loop = tr
           muted={muted}
           playsInline
           style={getVideoStyle()}
+          onError={(e) => {
+            console.log('Video load error:', e)
+            // Hide broken video on error
+            e.target.style.display = 'none'
+          }}
         />
       )}
     </motion.div>

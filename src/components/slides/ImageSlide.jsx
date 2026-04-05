@@ -38,6 +38,26 @@ function ImageSlide({ src, alt = '', fit = 'fullscreen', background = '#000000',
     }
   }
 
+  // Handle missing src gracefully
+  if (!src) {
+    return (
+      <motion.div
+        className="slide"
+        style={{
+          backgroundColor: background,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center'
+        }}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+      >
+        {/* Empty slide - image source missing */}
+      </motion.div>
+    )
+  }
+
   return (
     <motion.div
       className="slide"
@@ -59,6 +79,10 @@ function ImageSlide({ src, alt = '', fit = 'fullscreen', background = '#000000',
         src={src}
         alt={alt}
         style={getImageStyle()}
+        onError={(e) => {
+          // Hide broken image icon on error
+          e.target.style.display = 'none'
+        }}
       />
     </motion.div>
   )

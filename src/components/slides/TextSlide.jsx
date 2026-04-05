@@ -2,6 +2,23 @@ import { motion } from 'framer-motion'
 import { getAnimation } from '../../animations'
 
 function TextSlide({ content, color = '#000000', background = '#ffffff', animation = 'cascade-up' }) {
+  // Handle missing or invalid content gracefully
+  if (!content || typeof content !== 'string') {
+    return (
+      <motion.div
+        className="slide"
+        style={{ backgroundColor: background }}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+      >
+        <div className="slide-text" style={{ color }}>
+          {/* Empty slide - content missing */}
+        </div>
+      </motion.div>
+    )
+  }
+
   const words = content.split(' ')
   const animConfig = getAnimation('text', animation)
 
