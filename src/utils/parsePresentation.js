@@ -28,10 +28,17 @@ export function parsePresentation(markdown, presentationPath) {
 
         // For image/video slides without explicit src, treat content as file path
         if ((currentSlide.type === 'image' || currentSlide.type === 'video') && !currentSlide.src && content) {
-          if (content.startsWith('assets/')) {
-            currentSlide.src = `${presentationPath}/${content}`;
-          } else {
+          // If it's a web URL (starts with http:// or https://), use as-is
+          if (content.startsWith('http://') || content.startsWith('https://')) {
             currentSlide.src = content;
+          }
+          // If it starts with assets/, prepend presentation path
+          else if (content.startsWith('assets/')) {
+            currentSlide.src = `${presentationPath}/${content}`;
+          }
+          // Otherwise, assume it's a filename in the assets folder
+          else {
+            currentSlide.src = `${presentationPath}/assets/${content}`;
           }
           console.log('Parsed media slide:', currentSlide.type, 'src:', currentSlide.src);
         } else {
