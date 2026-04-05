@@ -50,11 +50,6 @@ fit: fullscreen
 background: #ffffff
 Andy-Warhol-Silk-Screening.jpg
 
-## slide: image
-fit: fullscreen
-background: #ffffff
-22God-Save-the-Queen22-T-Shirt.jpeg
-
 ## slide: text
 animation: cascade-up
 background: #ffffff
@@ -73,10 +68,10 @@ background: #ffffff
 color: #000000
 Screenprinting
 
-## slide: image
+## slide: video
 fit: fullscreen
 background: #ffffff
-https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?w=1600&q=80
+IMG_2283.mov
 
 ## slide: text
 animation: cascade-up
@@ -87,7 +82,7 @@ Whatprinting?
 ## slide: image
 fit: fullscreen
 background: #ffffff
-https://images.unsplash.com/photo-1618242896626-35e8f2d87da4?w=1600&q=80
+IMG_2536.jpeg
 
 ## slide: text
 animation: cascade-up
@@ -101,16 +96,10 @@ background: #ffffff
 color: #000000
 Step 1: Design
 
-## slide: text
-animation: cascade-up
-background: #ffffff
-color: #000000
-TODO: Add your design photo here
-
-## slide: image
+## slide: video
 fit: fullscreen
 background: #ffffff
-https://i.imgflip.com/2/1bij.jpg
+IMG_2342.mov
 
 ## slide: text
 animation: cascade-up
