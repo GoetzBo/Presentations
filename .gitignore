@@ -1,43 +1,30 @@
 # Dependencies
 node_modules/
-bower_components/
 
-# Fonts (add actual font files here if needed to be ignored)
-# public/fonts/*.ttf
-# public/fonts/*.otf
-
-# Build outputs
+# Build output
 dist/
-build/
-out/
 *.log
 
-# Environment variables
+# Environment
 .env
 .env.local
 .env.*.local
 
-# IDE and editor files
+# Editor / IDE
 .vscode/
 .idea/
 *.swp
 *.swo
 *~
-.DS_Store
 
-# OS files
+# OS
+.DS_Store
 Thumbs.db
 
-# Temporary files
+# Claude Code
+.claude/
+
+# Temp
 *.tmp
 *.temp
 .cache/
-
-# Test coverage
-coverage/
-.nyc_output/
-
-# Package manager lock files (optional - uncomment if needed)
-# package-lock.json
-# yarn.lock
-# pnpm-lock.yaml
