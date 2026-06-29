@@ -1,10 +1,11 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { AnimatePresence } from 'framer-motion'
 import TextSlide from './slides/TextSlide'
 import ImageSlide from './slides/ImageSlide'
 import VideoSlide from './slides/VideoSlide'
 import SlideOverview from './SlideOverview'
 import { parsePresentation } from '../utils/parsePresentation'
+import { useSwipe } from '../hooks/useSwipe'
 
 function PresentationViewer({ presentation, onExit }) {
   const [slides, setSlides] = useState([])
@@ -121,6 +122,20 @@ function PresentationViewer({ presentation, onExit }) {
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [slides.length, onExit, isStarted, showOverview])
 
+  const handleSwipeNext = useCallback(() => {
+    if (showOverview) return
+    if (!isStarted) { setIsStarted(true); return }
+    setCurrentSlide((prev) => Math.min(prev + 1, slides.length - 1))
+  }, [showOverview, isStarted, slides.length])
+
+  const handleSwipePrev = useCallback(() => {
+    if (showOverview) return
+    if (!isStarted) { setIsStarted(true); return }
+    setCurrentSlide((prev) => Math.max(prev - 1, 0))
+  }, [showOverview, isStarted])
+
+  useSwipe({ onNext: handleSwipeNext, onPrev: handleSwipePrev })
+
   if (slides.length === 0) return null
 
   const slide = slides[currentSlide]
@@ -195,6 +210,7 @@ function PresentationViewer({ presentation, onExit }) {
             background={slide.background}
             width={slide.width}
             height={slide.height}
+            anchor={slide.anchor}
           />
         )}
         {isStarted && slide.type === 'video' && (
@@ -210,42 +226,6 @@ function PresentationViewer({ presentation, onExit }) {
           />
         )}
       </AnimatePresence>
-      {!isStarted && (
-        <div style={{
-          width: '100%',
-          height: '100%',
-          backgroundColor: slide.background || '#ffffff',
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          zIndex: 0,
-          display: 'flex',
-          alignItems: 'flex-end',
-          justifyContent: 'center',
-          paddingBottom: '2rem',
-        }}>
-          <div style={{
-            display: 'flex',
-            gap: '1.5rem',
-            fontFamily: 'system-ui, sans-serif',
-            fontSize: '0.6rem',
-            letterSpacing: '0.12em',
-            textTransform: 'uppercase',
-            color: 'rgba(0,0,0,0.2)',
-            userSelect: 'none',
-          }}>
-            {[
-              ['→ / Space', 'advance'],
-              ['← / Backspace', 'back'],
-              ['O', 'overview / close'],
-              ['F', 'fullscreen'],
-              ['Esc', 'exit'],
-            ].map(([key, label]) => (
-              <span key={key}><span style={{ fontWeight: 700 }}>{key}</span> {label}</span>
-            ))}
-          </div>
-        </div>
-      )}
       <AnimatePresence>
         {showOverview && (
           <SlideOverview
