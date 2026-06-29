@@ -256,10 +256,12 @@ function TextSlide({ content, previousContent = null, color = '#000000', backgro
   const frozenLineCount = previousContent ? parseContent(previousContent).length : 0
   const newLineCount = allLines.length - frozenLineCount
 
-  // Compute the Y offset in px: font-size 6rem × line-height 1.2 per line, shifted up by newLines/2
+  // Compute the Y offset matching the responsive font size (clamp(2rem, 8vw, 6rem))
   const rootFontSize = parseFloat(getComputedStyle(document.documentElement).fontSize)
+  const vw = window.innerWidth * 0.08
+  const responsiveFontSize = Math.min(Math.max(2 * rootFontSize, vw), 6 * rootFontSize)
   const slideUpInitialY = previousContent
-    ? (newLineCount * 6 * 1.2 * rootFontSize) / 2
+    ? (newLineCount * responsiveFontSize * 1.2) / 2
     : 0
 
   if (!content || typeof content !== 'string') {

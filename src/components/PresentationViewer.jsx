@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
-import { AnimatePresence } from 'framer-motion'
+import { AnimatePresence, motion } from 'framer-motion'
 import TextSlide from './slides/TextSlide'
 import ImageSlide from './slides/ImageSlide'
 import VideoSlide from './slides/VideoSlide'
@@ -13,7 +13,26 @@ function PresentationViewer({ presentation, onExit }) {
   const [transitionMode, setTransitionMode] = useState('wait')
   const [isStarted, setIsStarted] = useState(false)
   const [showOverview, setShowOverview] = useState(false)
+  const [controlsVisible, setControlsVisible] = useState(true)
+  const controlsTimer = useRef(null)
+  const isTouchDevice = 'ontouchstart' in window
   const previousSlideIndex = useRef(0)
+
+  const resetControlsTimer = useCallback(() => {
+    setControlsVisible(true)
+    clearTimeout(controlsTimer.current)
+    controlsTimer.current = setTimeout(() => setControlsVisible(false), 3000)
+  }, [])
+
+  useEffect(() => {
+    if (!isTouchDevice) return
+    resetControlsTimer()
+    window.addEventListener('touchstart', resetControlsTimer, { passive: true })
+    return () => {
+      window.removeEventListener('touchstart', resetControlsTimer)
+      clearTimeout(controlsTimer.current)
+    }
+  }, [isTouchDevice, resetControlsTimer])
 
   useEffect(() => {
     if (!presentation) return
@@ -236,8 +255,60 @@ function PresentationViewer({ presentation, onExit }) {
           />
         )}
       </AnimatePresence>
+      {isTouchDevice && (
+        <AnimatePresence>
+          {controlsVisible && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.25 }}
+              style={{
+                position: 'fixed',
+                top: 16,
+                right: 16,
+                zIndex: 200,
+                display: 'flex',
+                gap: 8,
+              }}
+            >
+              <button
+                onClick={() => setShowOverview(prev => !prev)}
+                style={mobileButtonStyle}
+                aria-label="Slide overview"
+              >
+                ⊞
+              </button>
+              <button
+                onClick={onExit}
+                style={mobileButtonStyle}
+                aria-label="Exit presentation"
+              >
+                ✕
+              </button>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      )}
     </div>
   )
+}
+
+const mobileButtonStyle = {
+  width: 44,
+  height: 44,
+  borderRadius: 12,
+  border: 'none',
+  background: 'rgba(0,0,0,0.45)',
+  backdropFilter: 'blur(8px)',
+  WebkitBackdropFilter: 'blur(8px)',
+  color: '#fff',
+  fontSize: '1.1rem',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  cursor: 'pointer',
+  touchAction: 'manipulation',
 }
 
 export default PresentationViewer

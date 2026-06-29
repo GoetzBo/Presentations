@@ -205,7 +205,7 @@ body {
 }
 
 .slide-text {
-  font-size: 6rem;
+  font-size: clamp(2rem, 8vw, 6rem);
   font-weight: 900;
   text-align: center;
   padding: 2rem;
