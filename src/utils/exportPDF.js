@@ -2,6 +2,163 @@ import { jsPDF } from 'jspdf'
 import html2canvas from 'html2canvas'
 import QRCode from 'qrcode'
 import { parsePresentation } from './parsePresentation'
+import { parseConfig, resolveColor } from './parseConfig'
+
+function seededRand(seed) {
+  let s = seed * 9301 + 49297
+  return () => {
+    s = (s * 9301 + 49297) % 233280
+    return s / 233280
+  }
+}
+
+function markerPath(rng, slantDeg, top, bottom) {
+  const j = (s = 1) => (rng() - 0.5) * 2 * s
+  const slantX = (bottom - top) * Math.tan((slantDeg * Math.PI) / 180)
+  const steps = 6
+  const topPts = [], botPts = []
+  for (let i = 0; i <= steps; i++) {
+    const t = i / steps
+    topPts.push({ x: t * 120 + slantX * (1 - t) + j(1.5), y: top + j(1.8) })
+    botPts.push({ x: t * 120 + j(1.2), y: bottom + j(1.8) })
+  }
+  const smoothEdge = (pts) => {
+    let d = `M${pts[0].x.toFixed(1)},${pts[0].y.toFixed(1)}`
+    for (let i = 0; i < pts.length - 1; i++) {
+      const p0 = pts[i], p1 = pts[i + 1]
+      const cx = (p0.x + p1.x) / 2
+      d += ` C${cx.toFixed(1)},${p0.y.toFixed(1)} ${cx.toFixed(1)},${p1.y.toFixed(1)} ${p1.x.toFixed(1)},${p1.y.toFixed(1)}`
+    }
+    return d
+  }
+  const botRev = [...botPts].reverse()
+  return `${smoothEdge(topPts)} L${botPts[steps].x.toFixed(1)},${botPts[steps].y.toFixed(1)} ${smoothEdge(botRev).slice(1)} Z`
+}
+
+function buildHighlightSpan(token, wordIdx, color, spacing) {
+  const rng1 = seededRand(wordIdx * 3 + 1)
+  const rng2 = seededRand(wordIdx * 3 + 7)
+
+  const bandTop = 10 + (rng1() - 0.5) * 3
+  const bandH = 32 + (rng1() - 0.5) * 2
+  const slant1Deg = Math.pow(rng1(), 2) * 12 + 1
+  const slant2Deg = Math.pow(rng2(), 2) * 14 + 3
+  const top1 = bandTop + (rng1() - 0.5) * 1.5
+  const bot1 = top1 + bandH + (rng1() - 0.5) * 1
+  const top2 = bandTop - 1 + (rng2() - 0.5) * 1.5
+  const bot2 = top2 + bandH - 1 + (rng2() - 0.5) * 1
+  const maxSlantX = Math.max(
+    bandH * Math.tan((slant1Deg * Math.PI) / 180),
+    bandH * Math.tan((slant2Deg * Math.PI) / 180)
+  )
+  const clipW = 120 + maxSlantX * 2 + 40
+
+  const hex = color.replace('#', '')
+  const r = parseInt(hex.slice(0, 2), 16)
+  const g = parseInt(hex.slice(2, 4), 16)
+  const b = parseInt(hex.slice(4, 6), 16)
+
+  const path1 = markerPath(seededRand(wordIdx * 3 + 1), slant1Deg, top1, bot1)
+  const path2 = markerPath(seededRand(wordIdx * 3 + 7), slant2Deg, top2, bot2)
+
+  const gradId1 = `mg1-${wordIdx}`
+  const gradId2 = `mg2-${wordIdx}`
+
+  const svgNS = 'http://www.w3.org/2000/svg'
+  const svg = document.createElementNS(svgNS, 'svg')
+  svg.setAttribute('viewBox', '0 0 120 52')
+  svg.setAttribute('preserveAspectRatio', 'none')
+  svg.style.position = 'absolute'
+  svg.style.top = '0'
+  svg.style.left = `${-spacing - 10}px`
+  svg.style.width = `calc(100% + ${spacing * 2 + 20}px)`
+  svg.style.height = '100%'
+  svg.style.overflow = 'visible'
+
+  svg.innerHTML = `
+    <defs>
+      <linearGradient id="${gradId1}" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0%" stop-color="rgba(${r},${g},${b},0)"/>
+        <stop offset="7%" stop-color="rgba(${r},${g},${b},0.55)"/>
+        <stop offset="25%" stop-color="rgba(${r},${g},${b},0.70)"/>
+        <stop offset="75%" stop-color="rgba(${r},${g},${b},0.70)"/>
+        <stop offset="93%" stop-color="rgba(${r},${g},${b},0.50)"/>
+        <stop offset="100%" stop-color="rgba(${r},${g},${b},0)"/>
+      </linearGradient>
+      <linearGradient id="${gradId2}" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0%" stop-color="rgba(${r},${g},${b},0)"/>
+        <stop offset="9%" stop-color="rgba(${r},${g},${b},0.45)"/>
+        <stop offset="30%" stop-color="rgba(${r},${g},${b},0.60)"/>
+        <stop offset="70%" stop-color="rgba(${r},${g},${b},0.60)"/>
+        <stop offset="91%" stop-color="rgba(${r},${g},${b},0.42)"/>
+        <stop offset="100%" stop-color="rgba(${r},${g},${b},0)"/>
+      </linearGradient>
+    </defs>
+    <path d="${path1}" fill="url(#${gradId1})"/>
+    <path d="${path2}" fill="url(#${gradId2})"/>
+  `
+
+  const wrapper = document.createElement('span')
+  wrapper.style.position = 'relative'
+  wrapper.style.display = 'inline-block'
+  wrapper.appendChild(svg)
+
+  const textSpan = document.createElement('span')
+  textSpan.style.position = 'relative'
+  if (token.bold) {
+    textSpan.style.fontFamily = '"SF Pro Display", -apple-system, sans-serif'
+    textSpan.style.fontWeight = '900'
+  }
+  textSpan.textContent = token.text
+  wrapper.appendChild(textSpan)
+  return wrapper
+}
+
+// Inline parseContent from TextSlide — same logic, no React dependency
+function parseContent(content) {
+  const boldSegments = []
+  const boldRe = /\*\*([\s\S]+?)\*\*/g
+  let last = 0, m
+  while ((m = boldRe.exec(content)) !== null) {
+    if (m.index > last) boldSegments.push({ text: content.slice(last, m.index), bold: false })
+    boldSegments.push({ text: m[1], bold: true })
+    last = boldRe.lastIndex
+  }
+  if (last < content.length) boldSegments.push({ text: content.slice(last), bold: false })
+
+  const segments = []
+  const hlRe = /==([\s\S]+?)(?:\|([^=]+))?==/g
+  for (const seg of boldSegments) {
+    hlRe.lastIndex = 0
+    let hlLast = 0, hm
+    while ((hm = hlRe.exec(seg.text)) !== null) {
+      if (hm.index > hlLast) segments.push({ text: seg.text.slice(hlLast, hm.index), bold: seg.bold })
+      const colorName = hm[2] || null
+      hm[1].split('\n').forEach((line, li) => {
+        if (li > 0) segments.push({ lineBreak: true })
+        const phrase = line.trim()
+        if (phrase) segments.push({ text: phrase, highlight: true, colorName, bold: seg.bold })
+      })
+      hlLast = hlRe.lastIndex
+    }
+    if (hlLast < seg.text.length) segments.push({ text: seg.text.slice(hlLast), bold: seg.bold })
+  }
+
+  const lines = [[]]
+  for (const seg of segments) {
+    if (seg.lineBreak) {
+      lines.push([])
+    } else if (seg.highlight) {
+      lines[lines.length - 1].push(seg)
+    } else {
+      seg.text.split('\n').forEach((part, pi) => {
+        if (pi > 0) lines.push([])
+        part.split(' ').forEach(w => { if (w) lines[lines.length - 1].push({ text: w, bold: seg.bold }) })
+      })
+    }
+  }
+  return lines
+}
 
 /**
  * Export a presentation as PDF (one slide per page, 16:9 aspect ratio)
@@ -10,11 +167,22 @@ import { parsePresentation } from './parsePresentation'
  * @returns {Promise<void>}
  */
 export async function exportPresentationAsPDF(presentation, onProgress) {
-  const slides = parsePresentation(presentation.content, presentation.path)
+  const allSlides = parsePresentation(presentation.content, presentation.path)
 
-  if (slides.length === 0) {
+  if (allSlides.length === 0) {
     throw new Error('No slides found in presentation')
   }
+
+  // Filter out continuation slides — keep only the last slide in each build-up chain
+  const slides = allSlides.filter((slide, i) => {
+    const next = allSlides[i + 1]
+    if (
+      slide.type === 'text' &&
+      next?.type === 'text' &&
+      next.content?.trimStart().startsWith(slide.content?.trim())
+    ) return false
+    return true
+  })
 
   // Create PDF with 16:9 landscape orientation
   const pdf = new jsPDF({
@@ -119,21 +287,67 @@ async function renderSlideToDOM(container, slide) {
   slideDiv.style.overflow = 'hidden'
 
   if (slide.type === 'text') {
-    // Render text slide
     slideDiv.style.display = 'flex'
     slideDiv.style.alignItems = 'center'
     slideDiv.style.justifyContent = 'center'
 
+    const config = parseConfig(null) // use defaults; config.md not available in export context
+    const { colors, highlight: hlConfig, text: textConfig } = config
+    const defaultHlColor = resolveColor(hlConfig['default-color'], colors)
+    const defaultTextColor = textConfig['default-color'] || colors['text'] || '#1a1612'
+    const textColor = slide.color && slide.color !== '#000000' ? slide.color : defaultTextColor
+
+    const isDisplay = slide.font === 'display'
+    const fontFamily = isDisplay
+      ? '"SF Pro Display", -apple-system, BlinkMacSystemFont, sans-serif'
+      : '"Courier Prime", "Courier New", monospace'
+
     const textDiv = document.createElement('div')
     textDiv.style.fontSize = '6rem'
-    textDiv.style.fontWeight = '900'
-    textDiv.style.fontFamily = '"SF Pro Display", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif'
-    textDiv.style.color = slide.color || '#000000'
+    textDiv.style.fontWeight = '400'
+    textDiv.style.fontFamily = fontFamily
+    textDiv.style.color = textColor
     textDiv.style.textAlign = 'center'
-    textDiv.style.padding = '2rem'
+    textDiv.style.padding = '2rem 12rem'
     textDiv.style.lineHeight = '1.2'
-    textDiv.style.wordWrap = 'break-word'
-    textDiv.textContent = slide.content || ''
+    textDiv.style.maxWidth = '1600px'
+    textDiv.style.width = '1600px'
+    textDiv.style.boxSizing = 'border-box'
+    textDiv.style.wordBreak = 'break-word'
+    textDiv.style.overflowWrap = 'break-word'
+
+    const lines = parseContent(slide.content || '')
+    let wordIdx = 0
+    lines.forEach((lineTokens) => {
+      const lineDiv = document.createElement('div')
+      lineTokens.forEach(token => {
+        if (token.highlight) {
+          const hlColor = resolveColor(token.colorName, colors) || defaultHlColor
+          const spacing = hlConfig['spacing-min'] + 2
+          // Split phrase into individual words — each gets its own marker so multi-line wrapping works
+          const words = token.text.split(' ').filter(w => w)
+          words.forEach((word, wi) => {
+            const el = buildHighlightSpan({ ...token, text: word }, wordIdx + wi, hlColor, spacing)
+            el.style.display = 'inline-block'
+            el.style.marginRight = '0.3em'
+            lineDiv.appendChild(el)
+          })
+          wordIdx += Math.max(words.length, 1)
+        } else {
+          const span = document.createElement('span')
+          span.style.display = 'inline-block'
+          span.style.marginRight = '0.3em'
+          if (token.bold) {
+            span.style.fontFamily = '"SF Pro Display", -apple-system, sans-serif'
+            span.style.fontWeight = '900'
+          }
+          span.textContent = token.text
+          lineDiv.appendChild(span)
+          wordIdx++
+        }
+      })
+      textDiv.appendChild(lineDiv)
+    })
 
     slideDiv.appendChild(textDiv)
 

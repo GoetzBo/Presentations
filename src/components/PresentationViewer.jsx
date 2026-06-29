@@ -3,6 +3,7 @@ import { AnimatePresence } from 'framer-motion'
 import TextSlide from './slides/TextSlide'
 import ImageSlide from './slides/ImageSlide'
 import VideoSlide from './slides/VideoSlide'
+import SlideOverview from './SlideOverview'
 import { parsePresentation } from '../utils/parsePresentation'
 
 function PresentationViewer({ presentation, onExit }) {
@@ -10,6 +11,7 @@ function PresentationViewer({ presentation, onExit }) {
   const [currentSlide, setCurrentSlide] = useState(0)
   const [transitionMode, setTransitionMode] = useState('wait')
   const [isStarted, setIsStarted] = useState(false)
+  const [showOverview, setShowOverview] = useState(false)
   const previousSlideIndex = useRef(0)
 
   useEffect(() => {
@@ -56,34 +58,57 @@ function PresentationViewer({ presentation, onExit }) {
       (currentSlideData.type === 'image' || currentSlideData.type === 'video') &&
       (previousSlideData.type === 'image' || previousSlideData.type === 'video')
 
-    setTransitionMode(isFullscreenTransition ? 'sync' : 'wait')
+    // Check if this is a continuation transition (text slides where new content extends previous)
+    const isContinuationTransition =
+      previousSlideData?.type === 'text' &&
+      currentSlideData.type === 'text' &&
+      currentSlideData.content?.trimStart().startsWith(previousSlideData.content?.trim())
+
+    setTransitionMode(isFullscreenTransition || isContinuationTransition ? 'sync' : 'wait')
     previousSlideIndex.current = currentSlide
   }, [currentSlide, slides])
 
   useEffect(() => {
     const handleKeyDown = (e) => {
-      // Start presentation on first keypress
+      // Overview toggle
+      if (e.key === 'o' || e.key === 'O') {
+        setShowOverview(prev => !prev)
+        return
+      }
+
+      if (e.key === 'Escape') {
+        if (showOverview) {
+          setShowOverview(false)
+          return
+        }
+        if (!document.fullscreenElement) {
+          onExit()
+        }
+        // if fullscreen is active, browser exits it — we catch that via fullscreenchange below
+        return
+      }
+
+      // Block navigation keys when overview is open
+      if (showOverview) return
+
+      const isAdvance = e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.code === 'Space' || e.key === 'Enter'
+      const isBack = e.key === 'ArrowLeft' || e.key === 'ArrowUp' || e.key === 'Backspace' || e.key === 'Delete'
+
       if (!isStarted) {
-        if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === 'ArrowLeft' || e.key === 'ArrowUp' || e.code === 'Space') {
+        if (isAdvance || isBack) {
           e.preventDefault()
           setIsStarted(true)
           return
         }
       }
 
-      if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+      if (isAdvance) {
+        e.preventDefault()
         setCurrentSlide((prev) => Math.min(prev + 1, slides.length - 1))
-      } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+      } else if (isBack) {
+        e.preventDefault()
         setCurrentSlide((prev) => Math.max(prev - 1, 0))
-      } else if (e.key === 'Escape') {
-        // Escape exits fullscreen if in fullscreen, otherwise returns to selection page
-        if (document.fullscreenElement) {
-          document.exitFullscreen()
-        } else {
-          onExit()
-        }
       } else if (e.key === 'f' || e.key === 'F') {
-        // F toggles fullscreen on/off
         if (!document.fullscreenElement) {
           document.documentElement.requestFullscreen()
         } else {
@@ -94,25 +119,71 @@ function PresentationViewer({ presentation, onExit }) {
 
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [slides.length, onExit, isStarted])
+  }, [slides.length, onExit, isStarted, showOverview])
 
   if (slides.length === 0) return null
 
   const slide = slides[currentSlide]
+  const prevSlide = currentSlide > 0 ? slides[currentSlide - 1] : null
+  const nextSlide = currentSlide < slides.length - 1 ? slides[currentSlide + 1] : null
 
-  // Debug logging
-  console.log('Current slide:', currentSlide, slide)
+  // Continuation: current slide is a text slide whose content starts with all lines of the previous text slide
+  const isContinuation = !!(
+    slide.type === 'text' &&
+    prevSlide?.type === 'text' &&
+    prevSlide?.content &&
+    slide.content &&
+    slide.content.trimStart().startsWith(prevSlide.content.trim())
+  )
+
+  // Whether the next slide is a continuation of the current one (so current slide should exit instantly)
+  const nextIsContinuation = !!(
+    nextSlide?.type === 'text' &&
+    slide.type === 'text' &&
+    slide.content &&
+    nextSlide.content?.trimStart().startsWith(slide.content.trim())
+  )
+
+  // Walk back to find the root of the continuation chain for a stable React key
+  const continuationRootKey = (() => {
+    if (!isContinuation) return null
+    let i = currentSlide
+    while (i > 0) {
+      const cur = slides[i]
+      const prev = slides[i - 1]
+      if (
+        cur.type === 'text' && prev?.type === 'text' &&
+        cur.content?.trimStart().startsWith(prev.content?.trim())
+      ) { i-- } else break
+    }
+    return `cont-root-${i}`
+  })()
 
   return (
     <div className="viewer">
       <AnimatePresence mode={transitionMode}>
-        {isStarted && slide.type === 'text' && (
+        {isStarted && slide.type === 'text' && !isContinuation && (
           <TextSlide
             key={currentSlide}
             content={slide.content}
+            previousContent={null}
             color={slide.color}
             background={slide.background}
             animation={slide.animation}
+            font={slide.font}
+            instantExit={nextIsContinuation}
+          />
+        )}
+        {isStarted && slide.type === 'text' && isContinuation && (
+          <TextSlide
+            key={continuationRootKey}
+            content={slide.content}
+            previousContent={prevSlide.content}
+            color={slide.color}
+            background={slide.background}
+            animation={slide.animation}
+            font={slide.font}
+            instantExit={nextIsContinuation}
           />
         )}
         {isStarted && slide.type === 'image' && (
@@ -147,9 +218,44 @@ function PresentationViewer({ presentation, onExit }) {
           position: 'absolute',
           top: 0,
           left: 0,
-          zIndex: 0
-        }} />
+          zIndex: 0,
+          display: 'flex',
+          alignItems: 'flex-end',
+          justifyContent: 'center',
+          paddingBottom: '2rem',
+        }}>
+          <div style={{
+            display: 'flex',
+            gap: '1.5rem',
+            fontFamily: 'system-ui, sans-serif',
+            fontSize: '0.6rem',
+            letterSpacing: '0.12em',
+            textTransform: 'uppercase',
+            color: 'rgba(0,0,0,0.2)',
+            userSelect: 'none',
+          }}>
+            {[
+              ['→ / Space', 'advance'],
+              ['← / Backspace', 'back'],
+              ['O', 'overview / close'],
+              ['F', 'fullscreen'],
+              ['Esc', 'exit'],
+            ].map(([key, label]) => (
+              <span key={key}><span style={{ fontWeight: 700 }}>{key}</span> {label}</span>
+            ))}
+          </div>
+        </div>
       )}
+      <AnimatePresence>
+        {showOverview && (
+          <SlideOverview
+            slides={slides}
+            currentSlide={currentSlide}
+            onSelect={(i) => { setCurrentSlide(i); setIsStarted(true); setShowOverview(false) }}
+            onClose={() => setShowOverview(false)}
+          />
+        )}
+      </AnimatePresence>
     </div>
   )
 }

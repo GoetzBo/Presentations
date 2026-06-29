@@ -36,23 +36,67 @@ ASSETS:
 
 ## slide: text
 animation: cascade-up
-Welcome to the Future
+**==Presentations|highlight-purple==**
+A super simple
+Presentation App
+
+## slide: text
+animation: cascade-up 
+We slap ==too much|highlight-red== 
+on our slides
+
+## slide: text
+animation: cascade-up
+This little app
+should help with that
+
+## slide: text
+animation: cascade-up
+It forces 
+==radical simplification==
+and is based on 
+one MD-File
+
+## slide: text
+animation: cascade-up
+So you spend more time thinking
+and less time creating slides  
+
+## slide: text
+animation: cascade-up
+You can add
+==fullscreen
+images|highlight-blue==
 
 ## slide: image
 fit: fullscreen
 background: #000000
-assets/merlin_176725119_67d397c8-13ff-4150-af39-e7ffa3fe95f4-articleLarge.jpg.webp
+assets/281777_GettyImages-560462709_medium_jpg.jpg
+
+## slide: text
+animation: cascade-up
+You can also add
+==fullscreen
+videos==
 
 ## slide: video
 fit: fullscreen
 background: #000000
 loop: true
 muted: true
-https://www.youtube.com/watch?v=-pP8jpHIceQ
+assets/307715_GettyImages-1177608454_video_hd_web.mp4
 
 ## slide: text
 animation: cascade-up
-Make it exist first
+You can even add
+==small|highlight-green==
+images and videos
+as well
+
+## slide: image
+fit: inset
+background: #ffffff
+assets/281777_GettyImages-560462709_medium_jpg.jpg
 
 ## slide: video
 fit: positioned
@@ -62,15 +106,15 @@ loop: true
 muted: true
 assets/CamSwoosh-Oktopus10.mp4
 
-## slide: image
-fit: inset
-background: #ffffff
-assets/merlin_176725119_67d397c8-13ff-4150-af39-e7ffa3fe95f4-articleLarge.jpg.webp
+## slide: text
+animation: cascade-up
+==So what are you waiting for?|highlight-purple==
 
 ## slide: text
 animation: cascade-up
-Then make it beautiful
+Make it ==exist== first
 
 ## slide: text
 animation: cascade-up
-Continuous Motion
+Make it ==exist== first
+==Then== make it beautiful

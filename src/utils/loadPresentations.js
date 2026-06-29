@@ -1,3 +1,17 @@
+import { parseConfig } from './parseConfig.js'
+
+export async function loadConfig() {
+  try {
+    const loaders = import.meta.glob('/presentations/config.md', { query: '?raw', import: 'default', eager: false })
+    const loader = Object.values(loaders)[0]
+    if (!loader) return parseConfig(null)
+    const content = await loader()
+    return parseConfig(content)
+  } catch {
+    return parseConfig(null)
+  }
+}
+
 /**
  * Load all presentations from the /presentations folder
  * Uses Vite's import.meta.glob to automatically discover presentation.md files
