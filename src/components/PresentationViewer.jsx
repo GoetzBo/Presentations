@@ -194,7 +194,14 @@ function PresentationViewer({ presentation, onExit }) {
   })()
 
   return (
-    <div className="viewer">
+    <div
+      className="viewer"
+      onClick={() => {
+        if (isTouchDevice || showOverview) return
+        if (!isStarted) { setIsStarted(true); return }
+        setCurrentSlide((prev) => Math.min(prev + 1, slides.length - 1))
+      }}
+    >
       <AnimatePresence mode={transitionMode}>
         {isStarted && slide.type === 'text' && !isContinuation && (
           <TextSlide
